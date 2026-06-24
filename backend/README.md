@@ -108,3 +108,50 @@ pytest
 ```
 
 Las pruebas actuales no requieren conexión ni credenciales reales.
+
+## 10. Análisis exploratorio y ABC/XYZ
+
+```powershell
+python scripts\run_eda_analysis.py
+python scripts\run_abc_xyz_analysis.py
+```
+
+Ambos scripts aceptan opcionalmente `--date-from`, `--date-to`, `--item-code`,
+`--item-group`, `--warehouse-code` y `--min-months`.
+
+Endpoints disponibles:
+
+- `GET /analytics/data-quality`
+- `GET /analytics/abc`
+- `GET /analytics/abc-value`
+- `GET /analytics/xyz`
+- `GET /analytics/abc-xyz`
+- `GET /analytics/summary`
+
+Los endpoints admiten los mismos filtros. `/analytics/abc` también acepta
+`abc_basis=quantity|amount`; cantidad es el criterio principal.
+
+## 11. Forecast y comparación de modelos
+
+```powershell
+python scripts\run_forecast_baseline.py
+python scripts\run_forecast_model_comparison.py
+```
+
+Opciones principales:
+
+- `--test-months 6`: últimos meses reservados para backtesting.
+- `--horizon 3|6`: horizonte futuro.
+- `--date-from`, `--date-to`, `--item-group`, `--warehouse-code`.
+
+Endpoints:
+
+- `GET /forecast/candidates`
+- `GET /forecast/summary`
+- `GET /forecast/models`
+- `GET /forecast/results`
+- `GET /forecast/item/{item_code}`
+- `GET /forecast/comparison`
+
+La primera llamada completa puede tardar porque entrena y compara modelos. Los
+resultados se mantienen en caché durante la ejecución del proceso FastAPI.

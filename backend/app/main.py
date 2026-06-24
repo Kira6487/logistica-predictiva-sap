@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api.routes import demand, health, sap_diagnostics
+from app.api.routes import analytics, demand, forecast, health, sap_diagnostics
 
 app = FastAPI(
     title="Logística Predictiva SAP B1",
@@ -11,3 +11,5 @@ app = FastAPI(
 app.include_router(health.router)
 app.include_router(sap_diagnostics.router)
 app.include_router(demand.router)
+app.include_router(analytics.router)
+app.include_router(forecast.router)

@@ -27,6 +27,16 @@ MONTHLY_DEMAND_QUERY = text(
           AND T1.ItemCode IS NOT NULL
           AND (:item_code IS NULL OR T1.ItemCode = :item_code)
           AND (:warehouse_code IS NULL OR T1.WhsCode = :warehouse_code)
+          AND (
+              :item_group IS NULL
+              OR EXISTS (
+                  SELECT 1
+                  FROM OITM I0
+                  INNER JOIN OITB G0 ON G0.ItmsGrpCod = I0.ItmsGrpCod
+                  WHERE I0.ItemCode = T1.ItemCode
+                    AND G0.ItmsGrpNam = :item_group
+              )
+          )
 
         UNION ALL
 
@@ -44,6 +54,16 @@ MONTHLY_DEMAND_QUERY = text(
           AND T1.ItemCode IS NOT NULL
           AND (:item_code IS NULL OR T1.ItemCode = :item_code)
           AND (:warehouse_code IS NULL OR T1.WhsCode = :warehouse_code)
+          AND (
+              :item_group IS NULL
+              OR EXISTS (
+                  SELECT 1
+                  FROM OITM I0
+                  INNER JOIN OITB G0 ON G0.ItmsGrpCod = I0.ItmsGrpCod
+                  WHERE I0.ItemCode = T1.ItemCode
+                    AND G0.ItmsGrpNam = :item_group
+              )
+          )
     )
     SELECT
         YEAR(D.DocDate) AS year,

@@ -38,6 +38,7 @@ def get_monthly_demand(
     date_to: date | None = None,
     item_code: str | None = None,
     warehouse_code: str | None = None,
+    item_group: str | None = None,
 ) -> list[dict[str, Any]]:
     resolved_from, resolved_to = resolve_date_range(date_from, date_to)
     if resolved_from > resolved_to:
@@ -52,6 +53,7 @@ def get_monthly_demand(
                     "date_to": resolved_to,
                     "item_code": item_code,
                     "warehouse_code": warehouse_code,
+                    "item_group": item_group,
                 },
             )
             rows = [dict(row) for row in result.mappings()]
