@@ -1,0 +1,33 @@
+# Environment and secrets
+.env
+.env.local
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Generated exports and logs
+backend/exports/
+*.csv
+*.xlsx
+*.xls
+*.log
+logs/
+
+# Temporary and editor files
+*.tmp
+*.temp
+*.bak
+*.swp
+~$*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
