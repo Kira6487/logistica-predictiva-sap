@@ -155,3 +155,24 @@ Endpoints:
 
 La primera llamada completa puede tardar porque entrena y compara modelos. Los
 resultados se mantienen en caché durante la ejecución del proceso FastAPI.
+
+## 12. Inventario y reposición
+
+```powershell
+python scripts\run_replenishment_analysis.py
+python scripts\export_replenishment_dashboard_data.py
+```
+
+Endpoints:
+
+- `GET /inventory/current`
+- `GET /replenishment/summary`
+- `GET /replenishment/suggestions`
+- `GET /replenishment/critical`
+- `GET /replenishment/overstock`
+- `GET /replenishment/item/{item_code}`
+- `GET /replenishment/export-preview`
+
+La reposición agrega almacenes cuando no se indica `warehouse_code`. Las
+recomendaciones de confianza baja son referenciales y requieren revisión
+humana; no se presentan como decisiones automáticas.
