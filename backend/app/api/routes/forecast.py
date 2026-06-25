@@ -1,10 +1,17 @@
 from datetime import date
 
+import pandas as pd
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.core.database import DatabaseConnectionError
 from app.services.eda_service import dataframe_records
-from app.services.forecast_service import MODEL_DESCRIPTIONS, build_forecast
+from app.services.demand_service import get_monthly_demand
+from app.services.forecast_service import (
+    MODEL_DESCRIPTIONS,
+    build_forecast,
+    load_forecast_artifacts,
+    load_monthly_demand_artifact,
+)
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])
 
@@ -18,6 +25,16 @@ def _result(
     horizon: int,
 ):
     try:
+        if (
+            date_from is None
+            and date_to is None
+            and item_group is None
+            and warehouse_code is None
+            and test_months == 6
+        ):
+            artifact = load_forecast_artifacts(horizon)
+            if artifact is not None:
+                return artifact
         return build_forecast(
             date_from,
             date_to,
@@ -73,10 +90,17 @@ def candidates(
 ) -> list[dict]:
     frame = _params(
         date_from, date_to, item_group, warehouse_code, test_months, horizon
-    ).candidates
+    )
+    candidates_frame = frame.candidates.merge(
+        frame.best_models,
+        on="item_code",
+        how="left",
+    )
     if item_code:
-        frame = frame[frame["item_code"] == item_code]
-    return dataframe_records(frame)
+        candidates_frame = candidates_frame[
+            candidates_frame["item_code"] == item_code
+        ]
+    return dataframe_records(candidates_frame)
 
 
 @router.get("/summary")
@@ -152,7 +176,32 @@ def item_detail(
                 "reason": dataframe_records(excluded)[0],
             }
         raise HTTPException(status_code=404, detail="Artículo no encontrado.")
-    dataset = result.dataset[result.dataset["item_code"] == item_code]
+    dataset = (
+        result.dataset[result.dataset["item_code"] == item_code]
+        if "item_code" in result.dataset.columns
+        else pd.DataFrame()
+    )
+    if dataset.empty:
+        range_from = date.fromisoformat(str(result.summary["date_from"]))
+        range_to = date.fromisoformat(str(result.summary["date_to"]))
+        try:
+            rows = get_monthly_demand(range_from, range_to, item_code=item_code)
+        except DatabaseConnectionError:
+            rows = load_monthly_demand_artifact(item_code)
+        if rows:
+            observed = (
+                pd.DataFrame(rows)
+                .groupby("period", as_index=False)
+                .agg(net_quantity=("net_quantity", "sum"))
+            )
+            periods = pd.period_range(range_from, range_to, freq="M").astype(str)
+            dataset = (
+                observed.set_index("period")
+                .reindex(periods, fill_value=0.0)
+                .rename_axis("period")
+                .reset_index()
+            )
+            dataset["item_code"] = item_code
     comparison_frame = result.comparison[
         result.comparison["item_code"] == item_code
     ]

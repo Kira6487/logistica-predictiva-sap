@@ -27,6 +27,31 @@ class ReplenishmentResult:
     forecast: ForecastResult | None
 
 
+def load_replenishment_artifacts() -> ReplenishmentResult | None:
+    export_dir = Path(__file__).resolve().parents[2] / "exports"
+    paths = {
+        "inventory": export_dir / "current_inventory_snapshot.csv",
+        "suggestions": export_dir / "replenishment_suggestions.csv",
+        "summary": export_dir / "replenishment_summary.csv",
+    }
+    if not all(path.exists() for path in paths.values()):
+        return None
+    return ReplenishmentResult(
+        inventory=pd.read_csv(
+            paths["inventory"],
+            dtype={"item_code": str, "warehouse_code": str},
+            low_memory=False,
+        ),
+        suggestions=pd.read_csv(
+            paths["suggestions"],
+            dtype={"item_code": str, "warehouse_code": str},
+            low_memory=False,
+        ),
+        summary=pd.read_csv(paths["summary"]).iloc[0].to_dict(),
+        forecast=_artifact_forecast(3),
+    )
+
+
 def calculate_safety_stock(
     projected_demand: float,
     confidence: str,

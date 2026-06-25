@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 import warnings
 
@@ -37,6 +38,50 @@ class ForecastResult:
     best_models: pd.DataFrame
     future: pd.DataFrame
     summary: dict[str, Any]
+
+
+def load_forecast_artifacts(horizon: int = 3) -> ForecastResult | None:
+    if horizon != 3:
+        return None
+    export_dir = Path(__file__).resolve().parents[2] / "exports"
+    paths = {
+        "candidates": export_dir / "forecast_candidates.csv",
+        "excluded": export_dir / "forecast_excluded_items.csv",
+        "comparison": export_dir / "forecast_model_comparison.csv",
+        "best": export_dir / "forecast_best_model_by_item.csv",
+        "future": export_dir / "forecast_future_results.csv",
+        "summary": export_dir / "forecast_summary.csv",
+    }
+    if not all(path.exists() for path in paths.values()):
+        return None
+    return ForecastResult(
+        candidates=pd.read_csv(paths["candidates"], dtype={"item_code": str}),
+        excluded=pd.read_csv(paths["excluded"], dtype={"item_code": str}),
+        dataset=pd.DataFrame(),
+        comparison=pd.read_csv(paths["comparison"], dtype={"item_code": str}),
+        best_models=pd.read_csv(paths["best"], dtype={"item_code": str}),
+        future=pd.read_csv(paths["future"], dtype={"item_code": str}),
+        summary=pd.read_csv(paths["summary"]).iloc[0].to_dict(),
+    )
+
+
+def load_monthly_demand_artifact(item_code: str) -> list[dict[str, Any]]:
+    """Load one item's demand from the latest read-only Phase 1 CSV snapshot."""
+    export_dir = Path(__file__).resolve().parents[2] / "exports"
+    files = sorted(export_dir.glob("monthly_demand_*.csv"), reverse=True)
+    if not files:
+        return []
+
+    frame = pd.read_csv(files[0], dtype={"item_code": str})
+    if frame.empty or "item_code" not in frame.columns:
+        return []
+
+    item_rows = frame.loc[frame["item_code"] == str(item_code)].copy()
+    if item_rows.empty:
+        return []
+
+    item_rows["period"] = item_rows["period"].astype(str)
+    return item_rows.to_dict(orient="records")
 
 
 def naive_last_value(train: np.ndarray, horizon: int) -> np.ndarray:

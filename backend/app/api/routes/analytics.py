@@ -4,7 +4,11 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.database import DatabaseConnectionError
-from app.services.eda_service import build_analytics, dataframe_records
+from app.services.eda_service import (
+    build_analytics,
+    dataframe_records,
+    load_analytics_artifacts,
+)
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -35,6 +39,17 @@ class AnalyticsFilters:
 
 def _analysis(filters: AnalyticsFilters):
     try:
+        if (
+            filters.date_from is None
+            and filters.date_to is None
+            and filters.item_code is None
+            and filters.item_group is None
+            and filters.warehouse_code is None
+            and filters.min_months == 12
+        ):
+            artifact = load_analytics_artifacts()
+            if artifact is not None:
+                return artifact
         return build_analytics(
             date_from=filters.date_from,
             date_to=filters.date_to,

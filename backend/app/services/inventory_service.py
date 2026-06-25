@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from pathlib import Path
 
 import pandas as pd
 from sqlalchemy import text
@@ -100,3 +101,10 @@ def get_current_inventory(
 
 def inventory_records(frame: pd.DataFrame) -> list[dict[str, Any]]:
     return frame.where(pd.notna(frame), None).to_dict(orient="records")
+
+
+def load_inventory_artifact() -> pd.DataFrame | None:
+    path = Path(__file__).resolve().parents[2] / "exports" / "current_inventory_snapshot.csv"
+    if not path.exists():
+        return None
+    return pd.read_csv(path, dtype={"item_code": str, "warehouse_code": str})

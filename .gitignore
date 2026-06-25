@@ -31,3 +31,6 @@ logs/
 Thumbs.db
 .idea/
 .vscode/
+node_modules/
+frontend/dist/
+*.tsbuildinfo

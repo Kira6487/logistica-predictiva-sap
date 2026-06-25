@@ -8,6 +8,7 @@ from app.services.eda_service import dataframe_records
 from app.services.replenishment_service import (
     build_replenishment,
     filter_replenishment,
+    load_replenishment_artifacts,
 )
 
 router = APIRouter(prefix="/replenishment", tags=["replenishment"])
@@ -22,6 +23,17 @@ def _result(
     include_low_confidence: bool,
 ):
     try:
+        if (
+            date_from is None
+            and date_to is None
+            and item_group is None
+            and warehouse_code is None
+            and horizon_months == 3
+            and include_low_confidence
+        ):
+            artifact = load_replenishment_artifacts()
+            if artifact is not None:
+                return artifact
         return build_replenishment(
             date_from,
             date_to,

@@ -10,12 +10,16 @@ Business One `SBO_MEDINET_MIGRACION`.
 - Extracción de demanda mensual neta (facturas menos notas de crédito).
 - Exportación local a CSV para análisis exploratorio.
 
-No incluye todavía frontend, add-on SAP, base analítica ni modelos predictivos.
+Incluye backend analítico, forecasting, reposición y un portal React local de
+demostración. El add-on SAP y el despliegue productivo continúan fuera del
+alcance actual.
 
 ## Inicio rápido
 
 Consulta [backend/README.md](backend/README.md) para configurar el entorno,
 ejecutar la API y correr los scripts de diagnóstico y extracción.
+
+Consulta [frontend/README.md](frontend/README.md) para levantar el portal local.
 
 ## Arquitectura
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
+from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
@@ -26,6 +27,33 @@ class AnalyticsResult:
     xyz: pd.DataFrame
     combined: pd.DataFrame
     summary: dict[str, Any]
+
+
+def load_analytics_artifacts() -> AnalyticsResult | None:
+    export_dir = Path(__file__).resolve().parents[2] / "exports"
+    paths = {
+        "metrics": export_dir / "eda_item_metrics.csv",
+        "abc_quantity": export_dir / "abc_quantity_classification.csv",
+        "abc_amount": export_dir / "abc_amount_classification.csv",
+        "xyz": export_dir / "xyz_classification.csv",
+        "combined": export_dir / "abc_xyz_classification.csv",
+        "summary": export_dir / "analytics_summary.csv",
+    }
+    if not all(path.exists() for path in paths.values()):
+        return None
+    summary = pd.read_csv(paths["summary"]).iloc[0].to_dict()
+    return AnalyticsResult(
+        date_from=date.fromisoformat(str(summary["date_from"])),
+        date_to=date.fromisoformat(str(summary["date_to"])),
+        metrics=pd.read_csv(paths["metrics"], dtype={"item_code": str}),
+        abc_quantity=pd.read_csv(
+            paths["abc_quantity"], dtype={"item_code": str}
+        ),
+        abc_amount=pd.read_csv(paths["abc_amount"], dtype={"item_code": str}),
+        xyz=pd.read_csv(paths["xyz"], dtype={"item_code": str}),
+        combined=pd.read_csv(paths["combined"], dtype={"item_code": str}),
+        summary=summary,
+    )
 
 
 def resolve_analysis_date_range(
