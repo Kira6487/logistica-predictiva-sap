@@ -38,6 +38,13 @@ pnpm run dev
 
 Portal: `http://127.0.0.1:5173`
 
+Rutas principales de la navegación R1:
+
+- `/inicio`
+- `/recomendaciones`
+- `/diagnostico-articulo`
+- `/analisis-avanzado`
+
 En esta carpeta sincronizada con OneDrive, `npm run dev` compila y sirve una
 vista previa local estable. Si modifica el código, reinicie el comando para
 recompilar.
@@ -53,14 +60,19 @@ La compilación ejecuta primero la validación TypeScript y luego genera
 
 ## Pantallas
 
-- Dashboard ejecutivo.
-- Reposición sugerida.
-- Productos críticos.
-- Sobrestock.
-- Forecast.
-- ABC/XYZ.
-- Inventario.
-- Interpretación de indicadores.
+- Inicio: resumen ejecutivo y acciones del día.
+- Recomendaciones: acciones para abastecer, revisar, monitorear o no comprar.
+- Diagnóstico por artículo: lectura detallada de stock, ingresos esperados,
+  salidas comprometidas, consumo proyectado y cantidad sugerida.
+- Análisis avanzado: proyección de consumo, inventario por almacén,
+  segmentación técnica, calidad de datos y detalle histórico.
+
+Las rutas anteriores se conservan temporalmente como redirecciones:
+
+- `/dashboard` -> `/inicio`
+- `/replenishment`, `/critical`, `/overstock` -> `/recomendaciones`
+- `/forecast`, `/abc-xyz`, `/inventory` -> `/analisis-avanzado`
+- `/interpretation` -> `/inicio`
 
 El portal es informativo: no crea documentos, no modifica SAP y no automatiza
 órdenes de compra.

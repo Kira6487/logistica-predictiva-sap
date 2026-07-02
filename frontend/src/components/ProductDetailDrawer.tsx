@@ -50,16 +50,14 @@ export function ProductDetailDrawer({
               </div>
               <div className="detail-grid">
                 <Detail label="Stock disponible" value={formatNumber(data.replenishment.available_stock)} />
-                <Detail label="En pedido" value={formatNumber(data.replenishment.on_order_stock)} />
-                <Detail label="Forecast 3 meses" value={formatNumber(data.replenishment.projected_demand_horizon)} />
+                <Detail label="Ingresos esperados" value={formatNumber(data.replenishment.on_order_stock)} />
+                <Detail label="Consumo proyectado 3 meses" value={formatNumber(data.replenishment.projected_demand_horizon)} />
                 <Detail label="Cobertura" value={formatCoverage(data.replenishment.coverage_days)} />
                 <Detail label="Stock de seguridad" value={formatNumber(data.replenishment.safety_stock)} />
-                <Detail label="Compra sugerida" value={formatNumber(data.replenishment.suggested_purchase_quantity)} />
-                <Detail label="ABC / XYZ" value={data.replenishment.abc_xyz_class} />
-                <Detail label="Modelo" value={data.replenishment.model_used} />
+                <Detail label="Cantidad sugerida" value={formatNumber(data.replenishment.suggested_purchase_quantity)} />
               </div>
               <section className="drawer-callout">
-                <strong>Recomendación</strong>
+                <strong>Acción recomendada</strong>
                 <StatusBadge value={data.replenishment.recommendation_type} />
                 <p>{data.replenishment.recommendation_reason}</p>
               </section>

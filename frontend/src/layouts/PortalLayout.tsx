@@ -1,25 +1,17 @@
 import {
-  BarChart3,
   Boxes,
-  ChartNoAxesCombined,
-  CircleHelp,
-  Gauge,
-  PackageSearch,
-  ShieldAlert,
-  ShoppingCart,
-  Warehouse,
+  ChartColumnIncreasing,
+  ClipboardList,
+  House,
+  SearchCheck,
 } from "lucide-react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 const navigation = [
-  { to: "/dashboard", label: "Dashboard", icon: Gauge },
-  { to: "/replenishment", label: "Reposición sugerida", icon: ShoppingCart },
-  { to: "/critical", label: "Productos críticos", icon: ShieldAlert },
-  { to: "/overstock", label: "Sobrestock", icon: PackageSearch },
-  { to: "/forecast", label: "Forecast", icon: ChartNoAxesCombined },
-  { to: "/abc-xyz", label: "ABC / XYZ", icon: BarChart3 },
-  { to: "/inventory", label: "Inventario", icon: Warehouse },
-  { to: "/interpretation", label: "Interpretación", icon: CircleHelp },
+  { to: "/inicio", label: "Inicio", icon: House },
+  { to: "/recomendaciones", label: "Recomendaciones", icon: ClipboardList },
+  { to: "/diagnostico-articulo", label: "Diagnóstico por artículo", icon: SearchCheck },
+  { to: "/analisis-avanzado", label: "Análisis avanzado", icon: ChartColumnIncreasing },
 ];
 
 export function PortalLayout() {
@@ -62,11 +54,11 @@ export function PortalLayout() {
         <header className="topbar">
           <div>
             <span className="eyebrow">Portal de Logística Predictiva</span>
-            <h1>{active?.label || "Dashboard"}</h1>
+            <h1>{active?.label || "Inicio"}</h1>
           </div>
           <div className="topbar-meta">
             <span>Horizonte operativo</span>
-            <strong>Ene–Mar 2026</strong>
+            <strong>3 meses</strong>
           </div>
         </header>
         <main className="content">

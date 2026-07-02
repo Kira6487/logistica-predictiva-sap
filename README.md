@@ -14,12 +14,23 @@ Incluye backend analítico, forecasting, reposición y un portal React local de
 demostración. El add-on SAP y el despliegue productivo continúan fuera del
 alcance actual.
 
+La fase R1 prepara una navegación funcional más simple para usuarios
+gerenciales y logísticos: Inicio, Recomendaciones, Diagnóstico por artículo y
+Análisis avanzado. No cambia el motor principal de cálculo ni escribe
+información en SAP.
+
 ## Inicio rápido
 
 Consulta [backend/README.md](backend/README.md) para configurar el entorno,
 ejecutar la API y correr los scripts de diagnóstico y extracción.
 
 Consulta [frontend/README.md](frontend/README.md) para levantar el portal local.
+
+La documentación del rediseño funcional está en:
+
+- [docs/redisenio_estado_actual.md](docs/redisenio_estado_actual.md)
+- [docs/redisenio_nueva_estructura_portal.md](docs/redisenio_nueva_estructura_portal.md)
+- [docs/glosario_funcional_usuario.md](docs/glosario_funcional_usuario.md)
 
 ## Arquitectura
 
