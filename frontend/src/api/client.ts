@@ -1,5 +1,11 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
 
 export type QueryValue = string | number | boolean | null | undefined;
 
@@ -21,8 +27,9 @@ export async function apiGet<T>(
   const response = await fetch(`${API_BASE_URL}${path}${queryString(params)}`);
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    throw new Error(
+    throw new ApiError(
       payload?.detail || `La API respondió con estado ${response.status}.`,
+      response.status,
     );
   }
   return response.json() as Promise<T>;

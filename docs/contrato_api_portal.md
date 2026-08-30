@@ -5,14 +5,14 @@
 Variable:
 
 ```env
-VITE_API_BASE_URL=http://127.0.0.1:8000
+VITE_API_URL=http://127.0.0.1:8000
 ```
 
 ## Endpoints consumidos
 
 | Pantalla | Endpoints |
 |---|---|
-| Dashboard | `/health`, `/analytics/summary`, `/forecast/summary`, `/replenishment/summary` |
+| Dashboard | `/api/health`, `/analytics/summary`, `/forecast/summary`, `/replenishment/summary` |
 | Reposición | `/replenishment/suggestions`, `/replenishment/item/{item_code}` |
 | Críticos | `/replenishment/critical` |
 | Sobrestock | `/replenishment/overstock` |

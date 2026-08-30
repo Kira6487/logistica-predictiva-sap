@@ -7,11 +7,12 @@ from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.database import DatabaseConnectionError, get_engine
+from app.core.database import DatabaseConnectionError, read_rows
 from app.services.demand_service import get_monthly_demand
+from app.services.sap_queries import build_document_date_range_query
+from app.services.schema_service import get_available_schema
 
 
 AbcBasis = Literal["quantity", "amount"]
@@ -65,19 +66,10 @@ def resolve_analysis_date_range(
             raise ValueError("date_from no puede ser posterior a date_to.")
         return date_from, date_to
 
-    query = text(
-        """
-        SELECT MIN(DocDate) AS min_date, MAX(DocDate) AS max_date
-        FROM (
-            SELECT DocDate FROM OINV WHERE CANCELED = 'N'
-            UNION ALL
-            SELECT DocDate FROM ORIN WHERE CANCELED = 'N'
-        ) D
-        """
-    )
     try:
-        with get_engine().connect() as connection:
-            row = connection.execute(query).mappings().one()
+        row = read_rows(
+            build_document_date_range_query(get_available_schema())
+        )[0]
     except SQLAlchemyError as exc:
         raise DatabaseConnectionError(
             "No se pudo resolver el rango de fechas para analytics."

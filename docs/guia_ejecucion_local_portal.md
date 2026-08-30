@@ -44,7 +44,7 @@ FastAPI permite solicitudes GET desde:
 Si el portal muestra error:
 
 1. Confirmar que `/health` responde.
-2. Revisar `VITE_API_BASE_URL`.
+2. Revisar `VITE_API_URL`.
 3. Confirmar que frontend y backend usan los puertos 5173 y 8000.
 4. Probar `/replenishment/summary` directamente.
 

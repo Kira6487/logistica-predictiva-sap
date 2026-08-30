@@ -8,7 +8,7 @@ qué tan estables son y cuáles necesitan tratamiento especial.
 
 ## Alcance analizado
 
-- Base: `SBO_MEDINET_MIGRACION`.
+- Base demo: `erp_portfolio_demo` (datos sintéticos).
 - Rango: 31 de mayo de 2019 a 23 de diciembre de 2025.
 - Meses calendario disponibles: 80.
 - Artículos analizados: 5,260.

@@ -4,8 +4,12 @@ from typing import Any
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.database import DatabaseConnectionError, get_engine
-from app.services.sap_queries import MAX_SALES_DATE_QUERY, MONTHLY_DEMAND_QUERY
+from app.core.database import DatabaseConnectionError, read_rows
+from app.services.sap_queries import (
+    build_max_sales_date_query,
+    build_monthly_demand_query,
+)
+from app.services.schema_service import get_available_schema
 from app.utils.dates import default_24_month_range
 
 
@@ -17,8 +21,9 @@ def resolve_date_range(
         return date_from, date_to
 
     try:
-        with get_engine().connect() as connection:
-            max_doc_date = connection.execute(MAX_SALES_DATE_QUERY).scalar_one_or_none()
+        schema = get_available_schema()
+        rows = read_rows(build_max_sales_date_query(schema))
+        max_doc_date = rows[0]["max_doc_date"] if rows else None
     except SQLAlchemyError as exc:
         raise DatabaseConnectionError(
             "No se pudo consultar la fecha máxima de facturas en SAP."
@@ -45,18 +50,16 @@ def get_monthly_demand(
         raise ValueError("date_from no puede ser posterior a date_to.")
 
     try:
-        with get_engine().connect() as connection:
-            result = connection.execute(
-                MONTHLY_DEMAND_QUERY,
-                {
-                    "date_from": resolved_from,
-                    "date_to": resolved_to,
-                    "item_code": item_code,
-                    "warehouse_code": warehouse_code,
-                    "item_group": item_group,
-                },
-            )
-            rows = [dict(row) for row in result.mappings()]
+        rows = read_rows(
+            build_monthly_demand_query(get_available_schema()),
+            {
+                "date_from": resolved_from,
+                "date_to": resolved_to,
+                "item_code": item_code,
+                "warehouse_code": warehouse_code,
+                "item_group": item_group,
+            },
+        )
     except SQLAlchemyError as exc:
         raise DatabaseConnectionError(
             "No se pudo extraer la demanda mensual. Verifique la estructura "

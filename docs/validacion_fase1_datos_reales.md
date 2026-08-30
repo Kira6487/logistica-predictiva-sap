@@ -3,8 +3,8 @@
 ## Resultado
 
 - Fecha: 24 de junio de 2026.
-- Servidor: `CFR-I7-1`.
-- Base: `SBO_MEDINET_MIGRACION`.
+- La validación debe ejecutarse contra el servidor definido en `.env.local`.
+- Base demo: `erp_portfolio_demo` (datos sintéticos).
 - SQL Server: 15.0.2000.5, Developer Edition de 64 bits.
 - Modo: solo lectura.
 - Decisión: apto para continuar a Fase 2 ABC/XYZ.

@@ -7,7 +7,6 @@ from math import ceil
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 from app.services.eda_service import build_analytics

@@ -5,32 +5,66 @@ from pathlib import Path
 
 import pandas as pd
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.database import DatabaseConnectionError, get_engine
-
-
-INVENTORY_QUERY = text(
-    """
-    SELECT
-        W.ItemCode AS item_code,
-        I.ItemName AS item_name,
-        G.ItmsGrpNam AS item_group,
-        W.WhsCode AS warehouse_code,
-        H.WhsName AS warehouse_name,
-        CAST(W.OnHand AS decimal(19, 6)) AS physical_stock,
-        CAST(W.IsCommited AS decimal(19, 6)) AS committed_stock,
-        CAST(W.OnOrder AS decimal(19, 6)) AS on_order_stock
-    FROM OITW W
-    INNER JOIN OITM I ON I.ItemCode = W.ItemCode
-    LEFT JOIN OITB G ON G.ItmsGrpCod = I.ItmsGrpCod
-    LEFT JOIN OWHS H ON H.WhsCode = W.WhsCode
-    WHERE (:item_code IS NULL OR W.ItemCode = :item_code)
-      AND (:warehouse_code IS NULL OR W.WhsCode = :warehouse_code)
-      AND (:item_group IS NULL OR G.ItmsGrpNam = :item_group)
-    ORDER BY W.ItemCode, W.WhsCode
-    """
+from app.core.database import DatabaseConnectionError, read_frame
+from app.services.schema_service import get_available_schema
+from app.services.sap_queries import (
+    has_table,
+    pick_column,
+    quote_identifier,
+    table_columns,
 )
+
+
+def build_inventory_query(schema):
+    if not has_table(schema, "OITW"):
+        raise ValueError("La tabla OITW no existe en la demo.")
+    wcols = table_columns(schema, "OITW")
+    item = pick_column(wcols, "ItemCode", "Item", "SKU")
+    warehouse = pick_column(wcols, "WhsCode", "WarehouseCode", "Warehouse")
+    physical = pick_column(wcols, "OnHand", "PhysicalStock", "Stock")
+    committed = pick_column(wcols, "IsCommited", "IsCommitted", "Committed", "CommittedStock")
+    on_order = pick_column(wcols, "OnOrder", "OnOrderStock", "Ordered")
+    if not (item and warehouse and physical):
+        raise ValueError("OITW no contiene las columnas mínimas de inventario.")
+    committed_expr = f"W.{quote_identifier(committed)}" if committed else "0"
+    order_expr = f"W.{quote_identifier(on_order)}" if on_order else "0"
+    item_name, item_group, item_join = "NULL", "NULL", ""
+    if has_table(schema, "OITM"):
+        icols = table_columns(schema, "OITM")
+        ikey = pick_column(icols, "ItemCode", "Item", "SKU")
+        nkey = pick_column(icols, "ItemName", "Dscription", "Description")
+        gkey = pick_column(icols, "ItmsGrpCod", "ItemGroupCode", "ItemGroup")
+        if ikey:
+            item_join = f"LEFT JOIN [OITM] I ON I.{quote_identifier(ikey)} = W.{quote_identifier(item)}"
+            if nkey:
+                item_name = f"I.{quote_identifier(nkey)}"
+            if gkey and has_table(schema, "OITB"):
+                gcols = table_columns(schema, "OITB")
+                gcode = pick_column(gcols, "ItmsGrpCod", "ItemGroupCode", "GroupCode")
+                gname = pick_column(gcols, "ItmsGrpNam", "GroupName", "ItemGroup")
+                if gcode and gname:
+                    item_join += f"LEFT JOIN [OITB] G ON G.{quote_identifier(gcode)} = I.{quote_identifier(gkey)}"
+                    item_group = f"G.{quote_identifier(gname)}"
+    warehouse_name, warehouse_join = "W." + quote_identifier(warehouse), ""
+    if has_table(schema, "OWHS"):
+        hcols = table_columns(schema, "OWHS")
+        hkey = pick_column(hcols, "WhsCode", "WarehouseCode", "Warehouse")
+        hname = pick_column(hcols, "WhsName", "WarehouseName", "Name")
+        if hkey and hname:
+            warehouse_join = f"LEFT JOIN [OWHS] H ON H.{quote_identifier(hkey)} = W.{quote_identifier(warehouse)}"
+            warehouse_name = f"H.{quote_identifier(hname)}"
+    return text(
+        f"SELECT W.{quote_identifier(item)} AS item_code, {item_name} AS item_name, "
+        f"{item_group} AS item_group, W.{quote_identifier(warehouse)} AS warehouse_code, "
+        f"{warehouse_name} AS warehouse_name, CAST(W.{quote_identifier(physical)} AS decimal(19, 6)) AS physical_stock, "
+        f"CAST({committed_expr} AS decimal(19, 6)) AS committed_stock, "
+        f"CAST({order_expr} AS decimal(19, 6)) AS on_order_stock FROM [OITW] W "
+        f"{item_join} {warehouse_join} WHERE (:item_code IS NULL OR W.{quote_identifier(item)} = :item_code) "
+        f"AND (:warehouse_code IS NULL OR W.{quote_identifier(warehouse)} = :warehouse_code) "
+        "AND (:item_group IS NULL OR " + item_group + " = :item_group) "
+        f"ORDER BY W.{quote_identifier(item)}, W.{quote_identifier(warehouse)}"
+    )
 
 
 def calculate_stock_values(
@@ -51,17 +85,15 @@ def get_current_inventory(
     aggregate: bool = False,
 ) -> pd.DataFrame:
     try:
-        with get_engine().connect() as connection:
-            frame = pd.read_sql_query(
-                INVENTORY_QUERY,
-                connection,
-                params={
-                    "item_code": item_code,
-                    "warehouse_code": warehouse_code,
-                    "item_group": item_group,
-                },
-            )
-    except SQLAlchemyError as exc:
+        frame = read_frame(
+            build_inventory_query(get_available_schema()),
+            {
+                "item_code": item_code,
+                "warehouse_code": warehouse_code,
+                "item_group": item_group,
+            },
+        )
+    except (DatabaseConnectionError, ValueError) as exc:
         raise DatabaseConnectionError(
             "No se pudo consultar el inventario actual desde OITW."
         ) from exc

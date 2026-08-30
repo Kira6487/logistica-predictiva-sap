@@ -5,9 +5,9 @@ Backend inicial de solo lectura para SAP Business One sobre SQL Server.
 ## Requisitos
 
 - Python 3.11 o superior.
-- SQL Server accesible desde el equipo.
-- Microsoft ODBC Driver 17 for SQL Server (o el driver indicado en el entorno).
-- Usuario SQL con permisos de lectura sobre las tablas SAP requeridas.
+- Azure SQL accesible desde el equipo.
+- Microsoft ODBC Driver 18 for SQL Server.
+- Usuario `portal_demo_reader` con permisos de lectura.
 
 ## 1. Crear y activar el entorno virtual
 
@@ -33,12 +33,11 @@ Copie `.env.example` como `.env.local` en la raíz del repositorio:
 Copy-Item ..\.env.example ..\.env.local
 ```
 
-Edite `.env.local` con el servidor, puerto, base, usuario, contraseña y driver
-reales. No confirme este archivo en Git. Para producción o ambientes de cliente,
-use un usuario SQL dedicado y de solo lectura.
+Defina `DB_PASSWORD` exclusivamente en el entorno local o en el administrador de
+secretos del servicio. No confirme `.env.local` en Git ni imprima la contraseña.
+La configuración usa `DB_ENCRYPT=yes` y `DB_TRUST_SERVER_CERTIFICATE=no`.
 
-`DB_PORT` es opcional. Déjelo vacío cuando SSMS conecta usando únicamente el
-nombre del servidor, por ejemplo `DB_SERVER=CFR-I7-1`.
+`DB_PORT` debe ser `1433` para Azure SQL.
 
 ## 4. Ejecutar la API
 
@@ -52,7 +51,9 @@ Documentación interactiva: `http://127.0.0.1:8000/docs`
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/health
+Invoke-RestMethod http://127.0.0.1:8000/api/health/db
 Invoke-RestMethod http://127.0.0.1:8000/sap/diagnostics/connection
+Invoke-RestMethod http://127.0.0.1:8000/sap/diagnostics/schema
 Invoke-RestMethod "http://127.0.0.1:8000/demand/monthly"
 Invoke-RestMethod "http://127.0.0.1:8000/demand/monthly?date_from=2024-01-01&date_to=2025-12-31&item_code=ITEM001"
 Invoke-RestMethod "http://127.0.0.1:8000/demand/monthly?warehouse_code=01"
@@ -86,7 +87,7 @@ python scripts\extract_monthly_demand.py --date-from 2024-01-01 --date-to 2025-1
 
 Los archivos se guardan en `backend/exports/`, carpeta excluida de Git.
 
-## 8. Validación integral de Fase 1
+## 8. Validación integral de la demo
 
 ```powershell
 python scripts\validate_phase1_real_data.py
@@ -96,10 +97,13 @@ El script ejecuta el diagnóstico estructural, columnas críticas, demanda neta,
 resúmenes anual y mensual, controles de calidad y una muestra de validación de
 moneda. Genera:
 
-- `exports/phase1_validation_report.txt`
-- `exports/phase1_yearly_summary.csv`
+- `exports/phase1_validation_report.json`
 - `exports/phase1_monthly_summary.csv`
 - `exports/phase1_data_issues.csv`
+
+La validación inspecciona únicamente tablas y columnas presentes en la demo;
+cuenta relaciones huérfanas, nulos, cantidades negativas, meses distintos y
+artículos con al menos doce meses de historial.
 
 ## 9. Ejecutar pruebas
 

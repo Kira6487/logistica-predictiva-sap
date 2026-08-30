@@ -495,7 +495,11 @@ def _future_forecasts(
                 if not model_metrics.empty
                 else float(np.std(values))
             )
+            if not np.isfinite(error_scale):
+                error_scale = 0.0
             for period, value in zip(future_periods, predicted):
+                if not np.isfinite(value):
+                    raise ValueError("El modelo produjo una predicción no finita.")
                 records.append(
                     {
                         "item_code": row.item_code,

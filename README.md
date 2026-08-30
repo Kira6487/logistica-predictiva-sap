@@ -1,7 +1,7 @@
 # Portal de Logística Predictiva para SAP Business One
 
-Base inicial del backend analítico para consultar, sin modificar, la base de SAP
-Business One `SBO_MEDINET_MIGRACION`.
+Portal de demostración conectado en modo lectura a Azure SQL
+`erp_portfolio_demo`. Todos los datos de esa base son sintéticos.
 
 ## Alcance actual
 
@@ -34,8 +34,18 @@ La documentación del rediseño funcional está en:
 
 ## Arquitectura
 
-La solución actual mantiene acceso de solo lectura:
+La solución mantiene acceso de solo lectura:
 
-`SAP Business One / SQL Server -> FastAPI -> futuro portal web`
+`Azure SQL demo / adaptador SAP B1 -> FastAPI -> React en Vercel`
 
-Más detalle en [docs/arquitectura_inicial.md](docs/arquitectura_inicial.md).
+El proveedor `demo` está separado del adaptador para una futura integración
+productiva con SAP Business One. Más detalle en
+[docs/arquitectura_inicial.md](docs/arquitectura_inicial.md).
+
+## Configuración, pruebas y despliegue
+
+1. Configure `DB_PASSWORD` localmente; nunca la escriba en el chat, código o Git.
+2. Siga [backend/README.md](backend/README.md) para API, diagnóstico y pruebas.
+3. Siga [frontend/README.md](frontend/README.md) para el portal local.
+4. Consulte [DEPLOYMENT.md](DEPLOYMENT.md) para App Service/Container Apps y el
+   firewall restringido.

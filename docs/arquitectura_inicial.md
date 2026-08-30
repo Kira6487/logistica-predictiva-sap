@@ -3,8 +3,8 @@
 ## Flujo de la Fase 1
 
 ```text
-SAP Business One
-Base SQL Server SBO_MEDINET_MIGRACION
+Azure SQL demo
+Base erp_portfolio_demo (datos sintéticos)
         |
         | consultas SELECT de solo lectura
         v
@@ -23,7 +23,8 @@ mensual neta.
 ## Componentes
 
 - `app/core`: configuración de entorno y conexión SQLAlchemy/pyodbc.
-- `app/services`: consultas SAP y lógica de extracción reutilizable.
+- `app/services`: proveedor demo, consultas compatibles con el subconjunto SAP y
+  lógica de extracción reutilizable.
 - `app/api/routes`: endpoints HTTP.
 - `app/schemas`: contratos de respuesta.
 - `scripts`: diagnóstico y exportación para trabajo técnico.
@@ -31,7 +32,7 @@ mensual neta.
 
 ## Decisiones de seguridad
 
-- Las credenciales se leen desde `.env.local`.
+- La contraseña se lee desde `DB_PASSWORD` y nunca tiene valor por defecto.
 - `.env.local` está excluido de Git.
 - La API no devuelve usuario, contraseña ni cadena de conexión.
 - Se recomienda reemplazar cuentas administrativas por un usuario SQL de solo
@@ -40,7 +41,6 @@ mensual neta.
 
 ## Evolución prevista
 
-La base o esquema analítico separado, los procesos ETL, forecasting, reposición,
-frontend React y add-on SAP se desarrollarán en fases posteriores. El add-on
-solo servirá inicialmente como lanzador del portal local; esta fase no crea
-documentos ni escribe datos en SAP.
+El proveedor de demostración es sintético y de solo lectura. La integración
+productiva con SAP Business One debe implementarse como proveedor separado; no
+se mezclan sus credenciales ni su esquema con `DATA_PROVIDER=demo`.

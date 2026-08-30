@@ -15,7 +15,7 @@ import { useAsync } from "../hooks/useAsync";
 import { formatNumber } from "../utils/format";
 
 export function HomePage() {
-  const { data, loading, error, retry } = useAsync(async () => {
+  const { data, loading, error, errorStatus, retry } = useAsync(async () => {
     const [replenishment, health] = await Promise.all([
       dashboardApi.replenishment(),
       dashboardApi.health(),
@@ -24,7 +24,7 @@ export function HomePage() {
   }, []);
 
   if (loading) return <LoadingState label="Preparando resumen ejecutivo..." />;
-  if (error || !data) return <ErrorState message={error || "Sin datos."} onRetry={retry} />;
+  if (error || !data) return <ErrorState message={error || "Sin datos."} status={errorStatus} onRetry={retry} />;
 
   const summary = data.replenishment;
   const noBuyCount = summary.overstock_items + summary.no_demand_items + summary.not_recommended_items;

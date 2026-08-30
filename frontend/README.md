@@ -18,7 +18,7 @@ Copy-Item .env.example .env.local
 Valor predeterminado:
 
 ```env
-VITE_API_BASE_URL=http://127.0.0.1:8000
+VITE_API_URL=http://127.0.0.1:8000
 ```
 
 ## Instalación y ejecución
@@ -57,6 +57,10 @@ npm run build
 
 La compilación ejecuta primero la validación TypeScript y luego genera
 `frontend/dist/`.
+
+Para Vercel, seleccione `frontend/` como raíz del proyecto. El archivo
+`vercel.json` conserva las rutas SPA y el build usa `VITE_API_URL`; no coloque
+credenciales de base de datos en variables `VITE_`.
 
 ## Pantallas
 
