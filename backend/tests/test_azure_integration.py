@@ -8,7 +8,10 @@ from app.core.database import test_connection as read_only_connection
 pytestmark = pytest.mark.integration
 
 
-@pytest.mark.skipif(not os.getenv("DB_PASSWORD"), reason="DB_PASSWORD no configurada")
+@pytest.mark.skipif(
+    not os.getenv("DB_PASSWORD") or os.getenv("RUN_AZURE_INTEGRATION") != "1",
+    reason="Requiere DB_PASSWORD y RUN_AZURE_INTEGRATION=1",
+)
 def test_demo_login_is_read_only() -> None:
     result = read_only_connection()
 

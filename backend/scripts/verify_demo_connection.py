@@ -42,7 +42,7 @@ def main() -> int:
             return 3
         print("Preflight finalizado sin modificaciones en la base.")
         return 0
-    except (OSError, DatabaseConnectionError, ValueError) as exc:
+    except (OSError, DatabaseConnectionError, ValueError, ImportError) as exc:
         print(f"[ERROR] Preflight no disponible: {type(exc).__name__}")
         return 1
 

@@ -75,6 +75,8 @@ python -m pip install -r requirements.txt
 ruff check app tests scripts
 pytest -q
 python scripts/verify_demo_connection.py
+# Prueba opcional contra Azure SQL (solo lectura):
+RUN_AZURE_INTEGRATION=1 pytest -q -m integration
 ```
 
 El preflight hace DNS, TCP 1433, login, `DB_NAME()`, `SUSER_SNAME()` y prueba

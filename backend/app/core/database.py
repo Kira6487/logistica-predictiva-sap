@@ -50,7 +50,7 @@ def get_engine() -> Engine:
             pool_timeout=settings.db_connection_timeout,
             connect_args={"timeout": settings.db_connection_timeout},
         )
-    except (SQLAlchemyError, ValueError, ModuleNotFoundError) as exc:
+    except (SQLAlchemyError, ValueError, ImportError) as exc:
         raise DatabaseConnectionError(
             "No se pudo configurar la conexión a SQL Server. Revise .env.local, "
             "pyodbc y el ODBC Driver instalado."

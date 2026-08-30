@@ -13,6 +13,8 @@ PROJECT_DIR = BACKEND_DIR.parent
 # El archivo local puede ubicarse en la raíz del proyecto o en backend.
 load_dotenv(PROJECT_DIR / ".env.local", override=False)
 load_dotenv(BACKEND_DIR / ".env.local", override=False)
+load_dotenv(PROJECT_DIR / ".env", override=False)
+load_dotenv(BACKEND_DIR / ".env", override=False)
 
 
 def _optional_port(value: str | None) -> int | None:
