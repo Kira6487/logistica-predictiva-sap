@@ -49,6 +49,9 @@ VITE_API_URL=https://<BACKEND_HOST>
 No configure `VITE_DB_*`: cualquier variable `VITE_` queda expuesta al
 navegador.
 
+El portal operativo recuperado también utiliza `VITE_API_URL`; no requiere
+direcciones de backend escritas en el frontend.
+
 ## Firewall de Azure SQL
 
 No usar `0.0.0.0–255.255.255.255` ni habilitar “Allow Azure services” como

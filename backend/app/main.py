@@ -3,12 +3,20 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import (
     analytics,
+    consumption,
+    coverage_risk,
+    dashboard,
     demand,
     forecast,
     health,
     inventory,
+    inventory_position,
+    item_diagnosis,
+    open_documents,
+    recommendations,
     replenishment,
     sap_diagnostics,
+    stock,
 )
 from app.core.config import get_settings
 from app.core.config import Settings
@@ -37,6 +45,14 @@ def create_app(app_settings: Settings) -> FastAPI:
     application.include_router(forecast.router)
     application.include_router(inventory.router)
     application.include_router(replenishment.router)
+    application.include_router(dashboard.router)
+    application.include_router(consumption.router)
+    application.include_router(stock.router)
+    application.include_router(open_documents.router)
+    application.include_router(inventory_position.router)
+    application.include_router(coverage_risk.router)
+    application.include_router(recommendations.router)
+    application.include_router(item_diagnosis.router)
     return application
 
 
