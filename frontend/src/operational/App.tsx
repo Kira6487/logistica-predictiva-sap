@@ -934,7 +934,7 @@ function ItemDiagnosisPage({ initialItem }: { initialItem: string | null }) {
       <SectionHeader title="Diagnóstico por artículo" subtitle="Kardex proyectado y auditoría de disponibilidad" icon={pageIcons.diagnosis} />
       <WarningBox>Cantidad referencial. Requiere validación humana. No genera documentos SAP.</WarningBox>
       <form className="search-panel diagnosis-search" onSubmit={(event) => { event.preventDefault(); submitDiagnosis(false); }}>
-        <button className="secondary-button" type="button" disabled={!submitted.itemCode} onClick={() => submitDiagnosis(true)}>Actualizar diagnÃ³stico</button>
+        <button className="secondary-button" type="button" disabled={!submitted.itemCode} onClick={() => submitDiagnosis(true)}>Actualizar diagnóstico</button>
         <label>
           <span>Código de artículo</span>
           <input value={itemCode} onChange={(event) => setItemCode(event.target.value)} placeholder="Ej. 100100001" />
@@ -1245,24 +1245,31 @@ export function App() {
   const appData = useAppData();
   const [page, setPage] = useState<PageKey>("inicio");
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [navigationOpen, setNavigationOpen] = useState(false);
   const openItem = (itemCode: string) => {
     setSelectedItem(itemCode);
     setPage("diagnostico");
+    setNavigationOpen(false);
+  };
+  const navigateTo = (nextPage: PageKey) => {
+    setPage(nextPage);
+    setNavigationOpen(false);
   };
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <aside className={`sidebar${navigationOpen ? " sidebar-open" : ""}`} aria-label="Navegación principal">
         <div className="brand">
           <div className="brand-mark">LP</div>
           <div>
             <strong>Logistica Predictiva</strong>
             <span>SAP B1 V2</span>
           </div>
+          <button className="sidebar-close" type="button" aria-label="Cerrar menú" onClick={() => setNavigationOpen(false)}>Cerrar</button>
         </div>
         <nav>
           {navItems.map((item) => (
-            <button key={item.key} type="button" className={page === item.key ? "active" : ""} onClick={() => setPage(item.key)}>
+            <button key={item.key} type="button" className={page === item.key ? "active" : ""} onClick={() => navigateTo(item.key)}>
               {item.key === "inicio" && pageIcons.home}
               {item.key === "recomendaciones" && pageIcons.recommendations}
               {item.key === "compras" && pageIcons.purchases}
@@ -1275,9 +1282,25 @@ export function App() {
           ))}
         </nav>
       </aside>
+      <button
+        className={`navigation-overlay${navigationOpen ? " navigation-overlay-visible" : ""}`}
+        type="button"
+        aria-label="Cerrar menú de navegación"
+        tabIndex={navigationOpen ? 0 : -1}
+        onClick={() => setNavigationOpen(false)}
+      />
       <main className="content">
+        <header className="mobile-topbar">
+          <button className="menu-toggle" type="button" aria-expanded={navigationOpen} onClick={() => setNavigationOpen(true)}>
+            Menú
+          </button>
+          <div>
+            <strong>Logística Predictiva</strong>
+            <span>Portal operativo</span>
+          </div>
+        </header>
         <DataRefreshBar appData={appData} />
-        {page === "inicio" && <DashboardPage summary={appData.recommendationsSummary} lastUpdated={appData.lastUpdated} onNavigate={setPage} />}
+        {page === "inicio" && <DashboardPage summary={appData.recommendationsSummary} lastUpdated={appData.lastUpdated} onNavigate={navigateTo} />}
         {page === "recomendaciones" && <RecommendationsPage appData={appData} onOpenItem={openItem} />}
         {page === "compras" && <PurchaseCandidatesPage resource={appData.purchaseCandidates} onOpenItem={openItem} />}
         {page === "traslados" && <TransferCandidatesPage resource={appData.transferCandidates} onOpenItem={openItem} />}
