@@ -50,6 +50,9 @@ class Settings:
             if origin.strip()
         )
     )
+    allowed_origin_regex: str | None = field(
+        default_factory=lambda: os.getenv("ALLOWED_ORIGIN_REGEX") or None
+    )
 
     def __post_init__(self) -> None:
         if self.app_env.lower() == "production" and "*" in self.allowed_origins:

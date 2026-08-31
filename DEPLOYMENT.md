@@ -33,6 +33,7 @@ DB_CONNECTION_TIMEOUT=60
 DATA_PROVIDER=demo
 APP_ENV=production
 ALLOWED_ORIGINS=https://<VERCEL_PROJECT>.vercel.app
+ALLOWED_ORIGIN_REGEX=^https://logistica-predictiva(?:-sap)?(?:-[a-z0-9]+)*[.]vercel[.]app$
 ```
 
 `DB_PASSWORD` debe existir antes de iniciar la aplicación. No se registra y no
@@ -94,7 +95,10 @@ python scripts/diagnose_sap_db.py
 4. Ejecute `/api/health/db` y `/sap/diagnostics/schema` desde una red autorizada.
 5. Cree el proyecto Vercel con raíz `frontend/`, `VITE_API_URL` y
    `frontend/vercel.json`.
-6. Configure en Azure `ALLOWED_ORIGINS` con el dominio Vercel exacto, sin `*`.
+6. Configure en Azure `ALLOWED_ORIGINS` con los orígenes explícitos que necesite
+   y `ALLOWED_ORIGIN_REGEX` para los dominios del proyecto Vercel. La regex de
+   ejemplo acepta el dominio principal y sus dominios Git/Preview, pero no otros
+   proyectos de `vercel.app`. Nunca use `ALLOWED_ORIGINS=*`.
 
 ## Prueba posterior al despliegue
 

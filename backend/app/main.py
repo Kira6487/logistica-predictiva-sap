@@ -11,27 +11,33 @@ from app.api.routes import (
     sap_diagnostics,
 )
 from app.core.config import get_settings
+from app.core.config import Settings
 
-settings = get_settings()
 
-app = FastAPI(
-    title="Logística Predictiva SAP B1",
-    description="API de lectura para análisis logístico sobre SAP Business One.",
-    version="1.0.0",
-)
+def create_app(app_settings: Settings) -> FastAPI:
+    application = FastAPI(
+        title="Logística Predictiva SAP B1",
+        description="API de lectura para análisis logístico sobre SAP Business One.",
+        version="1.0.0",
+    )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=list(settings.allowed_origins),
-    allow_credentials=False,
-    allow_methods=["GET"],
-    allow_headers=["*"],
-)
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(app_settings.allowed_origins),
+        allow_origin_regex=app_settings.allowed_origin_regex,
+        allow_credentials=False,
+        allow_methods=["GET"],
+        allow_headers=["*"],
+    )
 
-app.include_router(health.router)
-app.include_router(sap_diagnostics.router)
-app.include_router(demand.router)
-app.include_router(analytics.router)
-app.include_router(forecast.router)
-app.include_router(inventory.router)
-app.include_router(replenishment.router)
+    application.include_router(health.router)
+    application.include_router(sap_diagnostics.router)
+    application.include_router(demand.router)
+    application.include_router(analytics.router)
+    application.include_router(forecast.router)
+    application.include_router(inventory.router)
+    application.include_router(replenishment.router)
+    return application
+
+
+app = create_app(get_settings())
