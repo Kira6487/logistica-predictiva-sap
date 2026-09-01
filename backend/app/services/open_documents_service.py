@@ -11,13 +11,13 @@ from app.services.stock_position_service import get_table_columns, get_table_typ
 
 OPEN_DOCUMENT_SOURCES: dict[str, dict[str, Any]] = {
     "OPOR": {"description": "Ordenes de compra abiertas", "expected_columns": ["DocEntry", "DocNum", "DocDate", "DocDueDate", "CardCode", "CardName", "DocStatus", "CANCELED", "DocCur"]},
-    "POR1": {"description": "Lineas de ordenes de compra abiertas", "expected_columns": ["DocEntry", "LineNum", "ItemCode", "Dscription", "WhsCode", "OpenQty", "Quantity", "DelivrdQty", "LineStatus", "Currency", "Price", "LineTotal"]},
+    "POR1": {"description": "Lineas de ordenes de compra abiertas", "expected_columns": ["DocEntry", "LineNum", "ItemCode", "Dscription", "WhsCode", "OpenQty", "Quantity", "DelivrdQty", "LineStatus", "Price", "LineTotal"]},
     "ORDR": {"description": "Ordenes de venta abiertas", "expected_columns": ["DocEntry", "DocNum", "DocDate", "DocDueDate", "CardCode", "CardName", "DocStatus", "CANCELED", "DocCur"]},
-    "RDR1": {"description": "Lineas de ordenes de venta abiertas", "expected_columns": ["DocEntry", "LineNum", "ItemCode", "Dscription", "WhsCode", "OpenQty", "Quantity", "DelivrdQty", "LineStatus", "Currency", "Price", "LineTotal"]},
+    "RDR1": {"description": "Lineas de ordenes de venta abiertas", "expected_columns": ["DocEntry", "LineNum", "ItemCode", "Dscription", "WhsCode", "OpenQty", "Quantity", "DelivrdQty", "LineStatus", "Price", "LineTotal"]},
     "OWOR": {"description": "Ordenes de fabricacion", "expected_columns": ["DocEntry", "DocNum", "PostDate", "DueDate", "ItemCode", "ProdName", "Warehouse", "PlannedQty", "CmpltQty", "Status"]},
     "WOR1": {"description": "Componentes de ordenes de fabricacion", "expected_columns": ["DocEntry", "LineNum", "ItemCode", "ItemName", "wareHouse", "PlannedQty", "IssuedQty"]},
     "OWTQ": {"description": "Solicitudes de traslado", "expected_columns": ["DocEntry", "DocNum", "DocDate", "DocDueDate", "CardCode", "CardName", "DocStatus", "CANCELED", "DocCur"]},
-    "WTQ1": {"description": "Lineas de solicitudes de traslado", "expected_columns": ["DocEntry", "LineNum", "ItemCode", "Dscription", "WhsCode", "FromWhsCod", "OpenQty", "Quantity", "LineStatus", "Currency", "Price", "LineTotal"]},
+    "WTQ1": {"description": "Lineas de solicitudes de traslado", "expected_columns": ["DocEntry", "LineNum", "ItemCode", "Dscription", "WhsCode", "FromWhsCod", "OpenQty", "Quantity", "LineStatus", "Price", "LineTotal"]},
 }
 
 
@@ -137,7 +137,7 @@ def get_open_purchase_orders(
             L.WhsCode AS warehouse_code,
             WH.WhsName AS warehouse_name,
             CAST({open_qty} AS decimal(19, 6)) AS cantidad_abierta,
-            COALESCE(L.Currency, H.DocCur) AS moneda,
+            H.DocCur AS moneda,
             CAST(ISNULL(L.Price, 0) AS decimal(19, 6)) AS precio,
             CAST(ISNULL(L.LineTotal, 0) AS decimal(19, 6)) AS total_linea,
             H.DocStatus AS estado_documento,
@@ -191,7 +191,7 @@ def get_open_sales_orders(
             L.WhsCode AS warehouse_code,
             WH.WhsName AS warehouse_name,
             CAST({open_qty} AS decimal(19, 6)) AS cantidad_abierta,
-            COALESCE(L.Currency, H.DocCur) AS moneda,
+            H.DocCur AS moneda,
             CAST(ISNULL(L.Price, 0) AS decimal(19, 6)) AS precio,
             CAST(ISNULL(L.LineTotal, 0) AS decimal(19, 6)) AS total_linea,
             H.DocStatus AS estado_documento,
@@ -288,7 +288,7 @@ def get_open_transfer_requests(item_code: str | None = None, warehouse: str | No
             L.WhsCode AS warehouse_code,
             WH.WhsName AS warehouse_name,
             CAST(ISNULL(L.OpenQty, 0) AS decimal(19, 6)) AS cantidad_abierta,
-            COALESCE(L.Currency, H.DocCur) AS moneda,
+            H.DocCur AS moneda,
             CAST(ISNULL(L.Price, 0) AS decimal(19, 6)) AS precio,
             CAST(ISNULL(L.LineTotal, 0) AS decimal(19, 6)) AS total_linea,
             H.DocStatus AS estado_documento,

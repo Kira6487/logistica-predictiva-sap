@@ -20,8 +20,8 @@ STOCK_SOURCES: dict[str, dict[str, Any]] = {
     },
     "OWHS": {
         "description": "Maestro de almacenes",
-        "expected_columns": ["WhsCode", "WhsName", "Locked", "Inactive"],
-        "key_columns": ["WhsCode", "WhsName", "Locked", "Inactive"],
+        "expected_columns": ["WhsCode", "WhsName", "Inactive"],
+        "key_columns": ["WhsCode", "WhsName", "Inactive"],
     },
 }
 
@@ -156,7 +156,7 @@ def get_stock_items(
             CAST(ISNULL(W.OnOrder, 0) AS decimal(19, 6)) AS stock_pedido,
             I.InvntItem AS item_inventory,
             I.validFor AS item_active,
-            ISNULL(H.Locked, 'N') AS warehouse_locked,
+            ISNULL(W.Locked, 'N') AS warehouse_locked,
             ISNULL(H.Inactive, 'N') AS warehouse_inactive
         FROM OITW W
         INNER JOIN OITM I ON I.ItemCode = W.ItemCode
@@ -164,7 +164,7 @@ def get_stock_items(
         WHERE (:item_code IS NULL OR W.ItemCode = :item_code)
           AND (:warehouse IS NULL OR W.WhsCode = :warehouse)
           AND (:include_inactive = 1 OR (I.InvntItem = 'Y' AND I.validFor = 'Y'))
-          AND (:include_locked_warehouses = 1 OR (ISNULL(H.Locked, 'N') <> 'Y' AND ISNULL(H.Inactive, 'N') <> 'Y'))
+          AND (:include_locked_warehouses = 1 OR (ISNULL(W.Locked, 'N') <> 'Y' AND ISNULL(H.Inactive, 'N') <> 'Y'))
           AND (:only_with_stock = 0 OR ISNULL(W.OnHand, 0) <> 0 OR ISNULL(W.IsCommited, 0) <> 0 OR ISNULL(W.OnOrder, 0) <> 0)
           AND (:only_negative = 0 OR ISNULL(W.OnHand, 0) < 0)
           AND (:only_committed_over_stock = 0 OR ISNULL(W.IsCommited, 0) > ISNULL(W.OnHand, 0))
@@ -201,7 +201,7 @@ def get_stock_summary() -> dict[str, Any]:
         LEFT JOIN OWHS H ON H.WhsCode = W.WhsCode
         WHERE I.InvntItem = 'Y'
           AND I.validFor = 'Y'
-          AND ISNULL(H.Locked, 'N') <> 'Y'
+          AND ISNULL(W.Locked, 'N') <> 'Y'
           AND ISNULL(H.Inactive, 'N') <> 'Y'
         """
     )
