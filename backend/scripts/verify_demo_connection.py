@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.core.config import get_settings  # noqa: E402
-from app.core.database import DatabaseConnectionError, test_connection  # noqa: E402
+from app.core.database import DatabaseConnectionError, _error_category, test_connection  # noqa: E402
 
 
 def main() -> int:
@@ -43,7 +43,10 @@ def main() -> int:
         print("Preflight finalizado sin modificaciones en la base.")
         return 0
     except (OSError, DatabaseConnectionError, ValueError, ImportError) as exc:
-        print(f"[ERROR] Preflight no disponible: {type(exc).__name__}")
+        print(
+            f"[ERROR] Preflight no disponible: {_error_category(exc)} "
+            f"({type(exc).__name__})"
+        )
         return 1
 
 

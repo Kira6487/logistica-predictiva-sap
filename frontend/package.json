@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "tsc --noEmit -p tsconfig.app.json && vite build --configLoader runner && vite preview --host localhost --port 5173 --configLoader runner",
+    "dev": "vite --configLoader runner",
     "build": "tsc --noEmit -p tsconfig.app.json && vite build --configLoader runner",
-    "preview": "vite preview --host localhost --port 5173 --configLoader runner"
+    "preview": "vite preview --configLoader runner"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

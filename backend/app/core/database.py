@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from functools import lru_cache
+import logging
 import time
 from typing import Any
 
@@ -8,6 +9,8 @@ from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import DBAPIError, OperationalError, SQLAlchemyError
 
 from app.core.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseConnectionError(RuntimeError):
@@ -23,6 +26,25 @@ def _is_transient(exc: BaseException) -> bool:
         phrase in message
         for phrase in ("timeout", "temporarily unavailable", "connection reset", "closed")
     )
+
+
+def _error_category(exc: BaseException) -> str:
+    """Return a safe diagnostic category without logging credentials or SQL text."""
+    messages: list[str] = []
+    current: BaseException | None = exc
+    while current is not None:
+        messages.append(str(current).lower())
+        current = current.__cause__
+    message = " ".join(messages)
+    if "can't open lib" in message or "driver" in message and "file not found" in message:
+        return "odbc_driver_missing"
+    if "login failed" in message or "28000" in message:
+        return "authentication_or_authorization"
+    if "08s01" in message or "08001" in message or "could not open a connection" in message:
+        return "network_or_firewall"
+    if "hyt00" in message or "hyt01" in message or "timeout" in message:
+        return "timeout"
+    return "database_operation"
 
 
 def _retry(operation, attempts: int = 4):
@@ -76,6 +98,7 @@ def read_rows(query, params: dict[str, Any] | None = None) -> list[dict[str, Any
     try:
         return _retry(operation)
     except (SQLAlchemyError, DatabaseConnectionError, ValueError) as exc:
+        logger.warning("Database read failed (%s)", _error_category(exc))
         raise DatabaseConnectionError(
             "Azure SQL no está disponible temporalmente o la consulta no pudo ejecutarse."
         ) from exc
@@ -89,6 +112,7 @@ def read_frame(query, params: dict[str, Any] | None = None) -> pd.DataFrame:
     try:
         return _retry(operation)
     except (SQLAlchemyError, DatabaseConnectionError, ValueError) as exc:
+        logger.warning("Database frame read failed (%s)", _error_category(exc))
         raise DatabaseConnectionError(
             "Azure SQL no está disponible temporalmente o la consulta no pudo ejecutarse."
         ) from exc
@@ -98,6 +122,7 @@ def test_connection() -> dict[str, Any]:
     query = text(
         """
         SELECT
+            1 AS connection_probe,
             DB_NAME() AS database_name,
             SUSER_SNAME() AS login_name,
             SYSDATETIME() AS server_datetime,
@@ -123,6 +148,7 @@ def test_connection() -> dict[str, Any]:
             },
         }
     except (SQLAlchemyError, DatabaseConnectionError, ValueError) as exc:
+        logger.warning("Database health check failed (%s)", _error_category(exc))
         raise DatabaseConnectionError(
             "No fue posible conectar con SQL Server. Verifique que el servicio "
             "esté activo, que la base exista y que las credenciales sean válidas."

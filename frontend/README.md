@@ -6,7 +6,7 @@ Business One.
 ## Requisitos
 
 - Node.js 20 o superior.
-- Backend FastAPI ejecutándose en `http://127.0.0.1:8000`.
+- Backend FastAPI ejecutándose en la URL indicada por `VITE_API_URL`.
 
 ## Configuración
 
@@ -15,7 +15,7 @@ cd frontend
 Copy-Item .env.example .env.local
 ```
 
-Valor predeterminado:
+Para desarrollo local:
 
 ```env
 VITE_API_URL=http://127.0.0.1:8000
@@ -29,14 +29,14 @@ npm install
 npm run dev
 ```
 
-También puede utilizarse pnpm:
+También puede utilizarse pnpm si se conserva el lockfile existente:
 
 ```powershell
 pnpm install
 pnpm run dev
 ```
 
-Portal: `http://127.0.0.1:5173`
+Vite muestra la URL local (normalmente `http://127.0.0.1:5173`) al iniciar.
 
 Rutas principales de la navegación R1:
 
@@ -45,9 +45,7 @@ Rutas principales de la navegación R1:
 - `/diagnostico-articulo`
 - `/analisis-avanzado`
 
-En esta carpeta sincronizada con OneDrive, `npm run dev` compila y sirve una
-vista previa local estable. Si modifica el código, reinicie el comando para
-recompilar.
+`npm run dev` inicia Vite en modo desarrollo con recarga automática.
 
 ## Compilación
 
@@ -61,6 +59,9 @@ La compilación ejecuta primero la validación TypeScript y luego genera
 Para Vercel, seleccione `frontend/` como raíz del proyecto. El archivo
 `vercel.json` conserva las rutas SPA y el build usa `VITE_API_URL`; no coloque
 credenciales de base de datos en variables `VITE_`.
+
+`VITE_API_URL` es obligatoria: el build falla con un mensaje explícito si no
+está definida.
 
 ## Pantallas
 

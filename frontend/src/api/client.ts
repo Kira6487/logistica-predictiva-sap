@@ -1,4 +1,12 @@
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+
+if (!configuredApiUrl) {
+  throw new Error(
+    "VITE_API_URL no está configurada. Defina la URL HTTPS del backend antes de iniciar el frontend.",
+  );
+}
+
+const API_BASE_URL = configuredApiUrl.replace(/\/+$/, "");
 
 export class ApiError extends Error {
   constructor(message: string, public readonly status: number) {

@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api.routes import (
     analytics,
@@ -20,6 +21,7 @@ from app.api.routes import (
 )
 from app.core.config import get_settings
 from app.core.config import Settings
+from app.core.database import DatabaseConnectionError
 
 
 def create_app(app_settings: Settings) -> FastAPI:
@@ -28,6 +30,15 @@ def create_app(app_settings: Settings) -> FastAPI:
         description="API de lectura para análisis logístico sobre SAP Business One.",
         version="1.0.0",
     )
+
+    @application.exception_handler(DatabaseConnectionError)
+    async def database_exception_handler(
+        _request: Request, _exc: DatabaseConnectionError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Azure SQL no está disponible temporalmente."},
+        )
 
     application.add_middleware(
         CORSMiddleware,

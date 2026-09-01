@@ -6,6 +6,14 @@ from app.core.database import DatabaseConnectionError, test_connection
 router = APIRouter(tags=["health"])
 
 
+@router.get("/")
+async def root() -> dict[str, str]:
+    return {
+        "status": "ok",
+        "service": "logistica-predictiva-backend",
+    }
+
+
 @router.get("/health")
 async def health() -> dict[str, str]:
     return {

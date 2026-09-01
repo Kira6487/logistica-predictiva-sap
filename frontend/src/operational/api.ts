@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../api/client";
+import { apiGet } from "../api/client";
 import type {
   CoverageRiskSummary,
   DashboardBootstrap,
@@ -29,14 +29,7 @@ function buildQuery(params: Record<string, QueryValue> = {}) {
 }
 
 async function request<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-  });
-  if (!response.ok) {
-    throw new Error(`Backend respondio ${response.status} en ${path}`);
-  }
-  return (await response.json()) as T;
+  return apiGet<T>(path);
 }
 
 export function getRecommendationsSummary(limit = 5000) {

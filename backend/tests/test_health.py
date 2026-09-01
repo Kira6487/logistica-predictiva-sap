@@ -20,6 +20,15 @@ def test_health() -> None:
     }
 
 
+def test_root_health() -> None:
+    async def request() -> httpx.Response:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            return await client.get("/")
+
+    assert asyncio.run(request()).status_code == 200
+
+
 def test_api_health() -> None:
     async def request() -> httpx.Response:
         transport = httpx.ASGITransport(app=app)
