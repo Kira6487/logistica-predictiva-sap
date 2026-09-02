@@ -1,0 +1,21 @@
+/* ================================================================
+   BADGES
+   ================================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-danger { color: #8f1f1f; background: #fae8e8; border-color: #f0b8b8; }
+.badge-orange { color: #94490b; background: #fff0df; border-color: #efc59b; }
+.badge-amber { color: #765000; background: #fff4d6; border-color: #e8d08b; }
+.badge-blue { color: #245083; background: #e8f1fb; border-color: #bed2ea; }
+.badge-success { color: var(--color-success); background: var(--color-success-soft); border-color: #add7c0; }
+.badge-muted { color: #5b6676; background: #f0f3f6; border-color: #d4dbe4; }

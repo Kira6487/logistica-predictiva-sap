@@ -12,7 +12,6 @@ import {
   Loader2,
   PackageCheck,
   Search,
-  ShieldAlert,
   ShoppingCart,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
@@ -113,15 +112,6 @@ export function RecommendationTypeBadge({ value }: { value: string }) {
             ? "orange"
             : "muted";
   return <Badge tone={tone}>{formatLabel(value)}</Badge>;
-}
-
-export function WarningBox({ children, icon = <ShieldAlert size={18} /> }: { children: ReactNode; icon?: ReactNode }) {
-  return (
-    <div className="warning-box">
-      {icon}
-      <span>{children}</span>
-    </div>
-  );
 }
 
 export function LoadingState({ label = "Cargando datos del backend..." }: { label?: string }) {
@@ -255,8 +245,9 @@ export interface ResizableTableColumn<T> {
 interface ResizableTableProps<T> {
   rows: T[];
   columns: ResizableTableColumn<T>[];
-  rowKey: (row: T) => string;
+  rowKey: (row: T, index: number) => string;
   storageKey: string;
+  onRowClick?: (row: T) => void;
   rowClassName?: (row: T) => string | undefined;
   note?: ReactNode;
   emptyMessage?: string;
@@ -288,6 +279,7 @@ export function ResizableTable<T>({
   columns,
   rowKey,
   storageKey,
+  onRowClick,
   rowClassName,
   note,
   emptyMessage,
@@ -371,13 +363,18 @@ export function ResizableTable<T>({
     setWidths((current) => ({ ...current, [column.key]: clampWidth(column, nextWidth!) }));
   };
 
+  const resetWidths = () => setWidths(defaultWidths);
+
   if (!rows.length) return <EmptyState message={emptyMessage} />;
 
   return (
     <div className="table-wrap">
       <div className="table-utility" aria-live="polite">
         <span>Arrastra los divisores de los encabezados para ajustar el ancho.</span>
-        <span className="table-utility-key">Preferencias guardadas en este navegador</span>
+        <div className="table-utility-actions">
+          <span className="table-utility-key">Preferencias guardadas en este navegador</span>
+          <button className="table-reset-button" type="button" onClick={resetWidths}>Restablecer columnas</button>
+        </div>
       </div>
       <table className={`data-table resizable-table${resizeState ? " is-resizing" : ""}`}>
         <colgroup>
@@ -412,8 +409,8 @@ export function ResizableTable<T>({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={rowKey(row)} className={rowClassName?.(row)}>
+          {rows.map((row, index) => (
+            <tr key={rowKey(row, index)} className={[onRowClick ? "clickable-row" : "", rowClassName?.(row) || ""].filter(Boolean).join(" ")} onClick={() => onRowClick?.(row)}>
               {columns.map((column) => (
                 <td key={column.key} className={`table-column--${column.kind || "medium"}`} style={{ textAlign: column.align || "left" }}>
                   {column.render(row)}
@@ -453,7 +450,6 @@ export function RecommendationDetailPanel({ item }: { item: RecommendationRecord
           <p>{item.priority_reasons?.length ? item.priority_reasons.join("; ") : "Sin motivos adicionales"}</p>
         </div>
       </div>
-      <WarningBox>Cantidad referencial. Requiere validacion humana. No genera documentos SAP.</WarningBox>
     </div>
   );
 }
@@ -469,53 +465,20 @@ export function RecommendationTable({
   selectedItem?: string | null;
   compact?: boolean;
 }) {
-  if (!items.length) return <EmptyState />;
-  return (
-    <div className="table-wrap">
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Articulo</th>
-            <th>Almacen</th>
-            <th>Tipo</th>
-            <th>Estado</th>
-            <th>Prioridad</th>
-            <th>Riesgo</th>
-            <th>Confianza</th>
-            <th>Mensaje</th>
-            <th>Cantidad</th>
-            <th>Accion</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => {
-            const key = `${item.item_code}-${item.warehouse_code}-${item.recommendation_type}`;
-            const selected = selectedItem === key;
-            return (
-              <tr key={key} className={selected ? "selected-row" : ""}>
-                <td>
-                  <button className="link-button" type="button" onClick={() => item.item_code && onSelect?.(item.item_code)}>
-                    <Eye size={14} /> {item.item_code || "-"}
-                  </button>
-                  <small>{item.item_name || "Sin nombre"}</small>
-                </td>
-                <td>{item.warehouse_code || "-"}</td>
-                <td><RecommendationTypeBadge value={item.recommendation_type} /></td>
-                <td><StatusBadge value={item.recommendation_status} /></td>
-                <td><PriorityBadge value={item.priority_level} /> <small>{formatNumber(item.priority_score)}</small></td>
-                <td><RiskBadge value={item.nivel_riesgo} /></td>
-                <td><ConfidenceBadge value={item.recommendation_confidence} /></td>
-                <td>{item.main_message}</td>
-                <td>{item.suggested_quantity > 0 ? `${formatNumber(item.suggested_quantity, 2)} ref.` : "-"}</td>
-                <td>{item.next_action_label}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      {!compact ? <p className="table-note">Vista limitada por filtros enviados al backend para evitar renderizar miles de filas.</p> : null}
-    </div>
-  );
+  const columns: ResizableTableColumn<RecommendationRecord>[] = [
+    { key: "item", header: "Artículo", width: 220, minWidth: 150, maxWidth: 420, kind: "medium", render: (item) => <><button className="link-button" type="button" onClick={() => item.item_code && onSelect?.(item.item_code)}><Eye size={14} /> {item.item_code || "-"}</button><small>{item.item_name || "Sin nombre"}</small></> },
+    { key: "warehouse", header: "Almacén", width: 110, minWidth: 84, maxWidth: 180, kind: "short", render: (item) => item.warehouse_code || "-" },
+    { key: "type", header: "Tipo", width: 190, minWidth: 150, maxWidth: 350, kind: "medium", render: (item) => <RecommendationTypeBadge value={item.recommendation_type} /> },
+    { key: "status", header: "Estado", width: 160, minWidth: 120, maxWidth: 280, kind: "short", render: (item) => <StatusBadge value={item.recommendation_status} /> },
+    { key: "priority", header: "Prioridad", width: 120, minWidth: 100, maxWidth: 190, kind: "short", render: (item) => <><PriorityBadge value={item.priority_level} /><small>{formatNumber(item.priority_score)}</small></> },
+    { key: "risk", header: "Riesgo", width: 115, minWidth: 95, maxWidth: 190, kind: "short", render: (item) => <RiskBadge value={item.nivel_riesgo} /> },
+    { key: "confidence", header: "Confianza", width: 125, minWidth: 105, maxWidth: 200, kind: "short", render: (item) => <ConfidenceBadge value={item.recommendation_confidence} /> },
+    { key: "message", header: "Mensaje", width: 340, minWidth: 220, maxWidth: 700, kind: "long", render: (item) => item.main_message },
+    { key: "quantity", header: "Cantidad", width: 120, minWidth: 100, maxWidth: 200, kind: "short", align: "right", render: (item) => item.suggested_quantity > 0 ? `${formatNumber(item.suggested_quantity, 2)} ref.` : "-" },
+    { key: "action", header: "Acción", width: 190, minWidth: 150, maxWidth: 360, kind: "medium", render: (item) => item.next_action_label },
+  ];
+
+  return <ResizableTable rows={items} columns={columns} rowKey={(item) => `${item.item_code}-${item.warehouse_code}-${item.recommendation_type}`} storageKey="logistica-table-diagnosis-recommendation-columns" rowClassName={(item) => selectedItem === `${item.item_code}-${item.warehouse_code}-${item.recommendation_type}` ? "selected-row" : undefined} note={!compact ? "Vista limitada por filtros enviados al backend para evitar renderizar miles de filas." : undefined} />;
 }
 
 export function ActionIcon({ type }: { type: string }) {

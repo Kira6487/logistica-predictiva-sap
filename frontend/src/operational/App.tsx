@@ -24,7 +24,6 @@ import {
   type ResizableTableColumn,
   SectionHeader,
   StatusBadge,
-  WarningBox,
   formatLabel,
   formatNumber,
   pageIcons,
@@ -161,8 +160,6 @@ function DashboardPage({
         </div>
       </header>
       <ResourceNotice resource={summary} label="resumen de recomendaciones" />
-      <WarningBox>Las recomendaciones son referenciales y requieren validación humana antes de operar en SAP.</WarningBox>
-
       <section className="executive-panel">
         <div className="executive-panel-heading">
           <div>
@@ -412,8 +409,6 @@ function RecommendationsPage({ appData, onOpenItem }: { appData: AppDataState; o
         subtitle="Acciones sugeridas por artículo según inventario actual, documentos abiertos, consumo histórico y riesgo de quiebre."
         icon={pageIcons.recommendations}
       />
-      <WarningBox>Las cantidades son referenciales y requieren validación humana antes de operar en SAP.</WarningBox>
-
       <div className="supply-summary-grid">
         <SupplySummaryCard title="Abastecer ahora" value={summary.abastecer} detail="Inventario insuficiente frente a demanda proyectada." tone="buy" />
         <SupplySummaryCard title="Revisar antes de abastecer" value={summary.revisar} detail="Casos con datos, documentos o compromisos por validar." tone="review" />
@@ -714,7 +709,6 @@ function PurchaseCandidatesPage({ resource, onOpenItem }: { resource: CachedReso
   return (
     <div className="page-stack">
       <SectionHeader title="Compras sugeridas" subtitle="Candidatos referenciales de compra" icon={pageIcons.purchases} />
-      <WarningBox>No genera orden de compra. Validar proveedor, minimo de compra, lead time y necesidad real antes de operar en SAP.</WarningBox>
       <FilterBar filters={filters} onChange={setFilters} showBooleans={false} vendorFilter />
       <ResourceNotice resource={resource} label="compras sugeridas" />
       {resource.status === "loading" && !resource.data ? <LoadingState label="Cargando página de compras sugeridas..." /> : <PurchaseTable items={rows} onOpenItem={onOpenItem} />}
@@ -762,7 +756,6 @@ function TransferCandidatesPage({ resource, onOpenItem }: { resource: CachedReso
   return (
     <div className="page-stack">
       <SectionHeader title="Traslados sugeridos" subtitle="Candidatos referenciales de traslado interno" icon={pageIcons.transfers} />
-      <WarningBox>No genera solicitud de traslado. Validar fisicamente disponibilidad y prioridad operativa antes de mover stock.</WarningBox>
       <FilterBar filters={filters} onChange={setFilters} showBooleans={false} />
       <ResourceNotice resource={resource} label="traslados sugeridos" />
       {resource.status === "loading" && !resource.data ? <LoadingState label="Cargando página de traslados sugeridos..." /> : <TransferTable items={rows} onOpenItem={onOpenItem} />}
@@ -772,43 +765,20 @@ function TransferCandidatesPage({ resource, onOpenItem }: { resource: CachedReso
 }
 
 function TransferTable({ items, onOpenItem }: { items: RecommendationRecord[]; onOpenItem: (itemCode: string) => void }) {
-  if (!items.length) return <EmptyState message="No hay candidatos de traslado para los filtros actuales." />;
-  return (
-    <div className="table-wrap">
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Articulo</th>
-            <th>Origen</th>
-            <th>Destino</th>
-            <th>Cantidad</th>
-            <th>Stock origen antes</th>
-            <th>Stock origen despues</th>
-            <th>Stock destino antes</th>
-            <th>Stock destino despues</th>
-            <th>Prioridad</th>
-            <th>Motivo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr key={`${item.item_code}-${item.source_warehouse}-${item.target_warehouse}`}>
-              <td><button className="link-button" type="button" onClick={() => item.item_code && onOpenItem(item.item_code)}>{item.item_code}</button><small>{item.item_name || "Sin nombre"}</small></td>
-              <td>{item.source_warehouse || "-"}</td>
-              <td>{item.target_warehouse || "-"}</td>
-              <td>{formatNumber(item.transfer_candidate_quantity, 2)} ref.</td>
-              <td>{formatNumber(item.source_projected_stock_before_transfer, 2)}</td>
-              <td>{formatNumber(item.source_remaining_stock_after_transfer, 2)}</td>
-              <td>{formatNumber(item.target_projected_stock_before_transfer, 2)}</td>
-              <td>{formatNumber(item.target_projected_stock_after_transfer, 2)}</td>
-              <td><PriorityBadge value={item.priority_level} /></td>
-              <td>{item.transfer_reason || item.business_reason}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  const columns: ResizableTableColumn<RecommendationRecord>[] = [
+    { key: "item", header: "Artículo", width: 220, minWidth: 150, maxWidth: 420, kind: "medium", render: (item) => <><button className="link-button" type="button" onClick={() => item.item_code && onOpenItem(item.item_code)}>{item.item_code || "-"}</button><small>{item.item_name || "Sin nombre"}</small></> },
+    { key: "source", header: "Almacén origen", width: 140, minWidth: 110, maxWidth: 220, kind: "medium", render: (item) => item.source_warehouse || "-" },
+    { key: "target", header: "Almacén destino", width: 140, minWidth: 110, maxWidth: 220, kind: "medium", render: (item) => item.target_warehouse || "-" },
+    { key: "quantity", header: "Cantidad sugerida", width: 150, minWidth: 120, maxWidth: 240, kind: "short", align: "right", render: (item) => `${formatNumber(item.transfer_candidate_quantity, 2)} ref.` },
+    { key: "source-before", header: "Stock origen antes", width: 150, minWidth: 120, maxWidth: 250, kind: "short", align: "right", render: (item) => formatNumber(item.source_projected_stock_before_transfer, 2) },
+    { key: "source-after", header: "Stock origen después", width: 160, minWidth: 130, maxWidth: 260, kind: "short", align: "right", render: (item) => formatNumber(item.source_remaining_stock_after_transfer, 2) },
+    { key: "target-before", header: "Stock destino antes", width: 160, minWidth: 130, maxWidth: 260, kind: "short", align: "right", render: (item) => formatNumber(item.target_projected_stock_before_transfer, 2) },
+    { key: "target-after", header: "Stock destino después", width: 170, minWidth: 140, maxWidth: 270, kind: "short", align: "right", render: (item) => formatNumber(item.target_projected_stock_after_transfer, 2) },
+    { key: "priority", header: "Prioridad", width: 120, minWidth: 100, maxWidth: 190, kind: "short", render: (item) => <PriorityBadge value={item.priority_level} /> },
+    { key: "reason", header: "Motivo / sustento", width: 360, minWidth: 220, maxWidth: 700, kind: "long", render: (item) => item.transfer_reason || item.business_reason || item.main_message },
+  ];
+
+  return <ResizableTable rows={items} columns={columns} rowKey={(item) => `${item.item_code}-${item.source_warehouse}-${item.target_warehouse}`} storageKey="logistica-table-transfers-columns" emptyMessage="No hay candidatos de traslado para los filtros actuales." />;
 }
 
 function ValidationsPage({ resource, onOpenItem }: { resource: CachedResource<PaginatedActionsResponse>; onOpenItem: (itemCode: string) => void }) {
@@ -829,7 +799,6 @@ function ValidationsPage({ resource, onOpenItem }: { resource: CachedResource<Pa
   return (
     <div className="page-stack">
       <SectionHeader title="Validaciones" subtitle="Casos que requieren limpieza, revision o analisis antes de comprar" icon={pageIcons.validations} />
-      <WarningBox>Estos casos no deben convertirse en compra automatica. Primero validar datos, maestro, compromisos y partidas abiertas.</WarningBox>
       <ResourceNotice resource={resource} label="validaciones" />
       {resource.status === "loading" && !resource.data ? <LoadingState label="Cargando página de validaciones..." /> : <ValidationList items={rows} onOpenItem={onOpenItem} />}
       {resource.data ? <PaginationControls total={resource.data.total} limit={resource.data.limit} offset={resource.data.offset} hasNext={resource.data.has_next} hasPrevious={resource.data.has_previous} onChange={setPagination} /> : null}
@@ -882,7 +851,6 @@ function ItemDiagnosisPage({ initialItem }: { initialItem: string | null }) {
   return (
     <div className="page-stack">
       <SectionHeader title="Diagnóstico por artículo" subtitle="Kardex proyectado y auditoría de disponibilidad" icon={pageIcons.diagnosis} />
-      <WarningBox>Cantidad referencial. Requiere validación humana. No genera documentos SAP.</WarningBox>
       <form className="search-panel diagnosis-search" onSubmit={(event) => { event.preventDefault(); submitDiagnosis(false); }}>
         <button className="secondary-button" type="button" disabled={!submitted.itemCode} onClick={() => submitDiagnosis(true)}>Actualizar diagnóstico</button>
         <label>
@@ -982,39 +950,18 @@ function AvailabilityAuditCard({ data }: { data: ItemDiagnosis }) {
 }
 
 function KardexTable({ rows }: { rows: ProjectedKardexLine[] }) {
-  if (!rows.length) return <EmptyState message="Sin movimientos para el Kardex proyectado." />;
-  return (
-    <div className="table-wrap kardex-wrap">
-      <table className="data-table kardex-table">
-        <thead>
-          <tr>
-            <th>Fecha / periodo</th>
-            <th>Tipo de movimiento</th>
-            <th>Documento / referencia</th>
-            <th>Almacén</th>
-            <th>Entrada</th>
-            <th>Salida</th>
-            <th>Saldo estimado</th>
-            <th>Origen</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={`${row.sort_key}-${index}`} className={row.origen === "Diagnóstico" ? "diagnosis-total-row" : ""}>
-              <td>{row.fecha_periodo || "-"}</td>
-              <td>{row.tipo_movimiento}<small>{row.nota || ""}</small></td>
-              <td>{row.documento_referencia || "-"}</td>
-              <td>{row.almacen || "-"}</td>
-              <td className="positive">{row.entrada ? formatNumber(row.entrada, 2) : "-"}</td>
-              <td className="negative">{row.salida ? formatNumber(row.salida, 2) : "-"}</td>
-              <td className={row.saldo_estimado < 0 ? "negative" : ""}>{formatNumber(row.saldo_estimado, 2)}</td>
-              <td><span className={`origin-badge ${originClass(row.origen)}`}>{row.origen}</span></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  const columns: ResizableTableColumn<ProjectedKardexLine>[] = [
+    { key: "period", header: "Fecha / período", width: 145, minWidth: 110, maxWidth: 220, kind: "medium", render: (row) => row.fecha_periodo || "-" },
+    { key: "movement", header: "Tipo de movimiento", width: 220, minWidth: 160, maxWidth: 420, kind: "medium", render: (row) => <>{row.tipo_movimiento}<small>{row.nota || ""}</small></> },
+    { key: "document", header: "Documento / referencia", width: 200, minWidth: 140, maxWidth: 360, kind: "medium", render: (row) => row.documento_referencia || "-" },
+    { key: "warehouse", header: "Almacén", width: 120, minWidth: 90, maxWidth: 190, kind: "short", render: (row) => row.almacen || "-" },
+    { key: "in", header: "Entrada", width: 115, minWidth: 90, maxWidth: 180, kind: "short", align: "right", render: (row) => <span className="positive">{row.entrada ? formatNumber(row.entrada, 2) : "-"}</span> },
+    { key: "out", header: "Salida", width: 115, minWidth: 90, maxWidth: 180, kind: "short", align: "right", render: (row) => <span className="negative">{row.salida ? formatNumber(row.salida, 2) : "-"}</span> },
+    { key: "balance", header: "Saldo estimado", width: 140, minWidth: 110, maxWidth: 220, kind: "short", align: "right", render: (row) => <span className={row.saldo_estimado < 0 ? "negative" : ""}>{formatNumber(row.saldo_estimado, 2)}</span> },
+    { key: "origin", header: "Origen", width: 150, minWidth: 120, maxWidth: 240, kind: "medium", render: (row) => <span className={`origin-badge ${originClass(row.origen)}`}>{row.origen}</span> },
+  ];
+
+  return <ResizableTable rows={rows} columns={columns} rowKey={(row, index) => `${row.sort_key}-${index}`} storageKey="logistica-table-diagnosis-kardex-columns" rowClassName={(row) => row.origen === "Diagnóstico" ? "diagnosis-total-row" : undefined} emptyMessage="Sin movimientos para el Kardex proyectado." />;
 }
 
 function originClass(origin: string) {
@@ -1099,30 +1046,16 @@ function RelatedDocumentsBlock({ data }: { data: ItemDiagnosis }) {
     ["Producción pendiente", data.documentos_sap_relacionados.produccion_pendiente],
     ["Traslados pendientes", data.documentos_sap_relacionados.traslados_pendientes],
   ];
-  return (
-    <div className="related-docs">
-      {groups.map(([title, documents]) => (
-        <div className="doc-group" key={title}>
-          <div>
-            <strong>{title}</strong>
-            <span>{formatNumber(documents.reduce((sum, doc) => sum + doc.cantidad_abierta, 0), 2)} un</span>
-          </div>
-          {documents.length ? documents.slice(0, 4).map((doc) => <RelatedDocumentRow key={`${title}-${doc.numero_documento}-${doc.almacen}`} doc={doc} />) : <small>Sin documentos abiertos.</small>}
-        </div>
-      ))}
-    </div>
-  );
-}
+  const rows = groups.flatMap(([group, documents]) => documents.slice(0, 4).map((document) => ({ group, document })));
+  const columns: ResizableTableColumn<{ group: string; document: RelatedDocument }>[] = [
+    { key: "group", header: "Grupo", width: 180, minWidth: 140, maxWidth: 320, kind: "medium", render: (row) => row.group },
+    { key: "document", header: "Documento", width: 150, minWidth: 100, maxWidth: 240, kind: "short", render: (row) => row.document.numero_documento || "-" },
+    { key: "date", header: "Fecha esperada", width: 150, minWidth: 110, maxWidth: 240, kind: "short", render: (row) => row.document.fecha_esperada || row.document.fecha || "-" },
+    { key: "type", header: "Tipo funcional", width: 180, minWidth: 130, maxWidth: 320, kind: "medium", render: (row) => row.document.tipo_funcional },
+    { key: "quantity", header: "Cantidad abierta", width: 140, minWidth: 110, maxWidth: 220, kind: "short", align: "right", render: (row) => formatNumber(row.document.cantidad_abierta, 2) },
+  ];
 
-function RelatedDocumentRow({ doc }: { doc: RelatedDocument }) {
-  return (
-    <div className="doc-row">
-      <span>{doc.numero_documento || "-"}</span>
-      <span>{doc.fecha_esperada || doc.fecha || "-"}</span>
-      <span>{doc.tipo_funcional}</span>
-      <strong>{formatNumber(doc.cantidad_abierta, 2)}</strong>
-    </div>
-  );
+  return <ResizableTable rows={rows} columns={columns} rowKey={(row, index) => `${row.group}-${row.document.numero_documento}-${row.document.almacen}-${index}`} storageKey="logistica-table-diagnosis-documents-columns" emptyMessage="Sin documentos abiertos." />;
 }
 
 function AdvancedAnalysisPage({ appData }: { appData: AppDataState }) {
@@ -1158,37 +1091,17 @@ function AdvancedAnalysisPage({ appData }: { appData: AppDataState }) {
 }
 
 function WarehouseTable({ items }: { items: WarehouseRecommendationSummary[] }) {
-  if (!items.length) return <EmptyState message="Sin resumen por almacen." />;
-  return (
-    <div className="table-wrap">
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Almacen</th>
-            <th>Urgentes</th>
-            <th>Altas</th>
-            <th>Compras</th>
-            <th>Traslados</th>
-            <th>Validaciones</th>
-            <th>Sin accion</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr key={item.warehouse_code || "sin-almacen"}>
-              <td>{item.warehouse_code}<small>{item.warehouse_name || ""}</small></td>
-              <td>{formatNumber(item.recomendaciones_urgentes)}</td>
-              <td>{formatNumber(item.recomendaciones_altas)}</td>
-              <td>{formatNumber(item.compras_sugeridas)}</td>
-              <td>{formatNumber(item.traslados_sugeridos)}</td>
-              <td>{formatNumber(item.validaciones_datos)}</td>
-              <td>{formatNumber(item.articulos_sin_accion)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  const columns: ResizableTableColumn<WarehouseRecommendationSummary>[] = [
+    { key: "warehouse", header: "Almacén", width: 220, minWidth: 150, maxWidth: 400, kind: "medium", render: (item) => <>{item.warehouse_code || "-"}<small>{item.warehouse_name || ""}</small></> },
+    { key: "urgent", header: "Urgentes", width: 110, minWidth: 85, maxWidth: 170, kind: "short", align: "right", render: (item) => formatNumber(item.recomendaciones_urgentes) },
+    { key: "high", header: "Altas", width: 100, minWidth: 85, maxWidth: 160, kind: "short", align: "right", render: (item) => formatNumber(item.recomendaciones_altas) },
+    { key: "purchases", header: "Compras", width: 110, minWidth: 85, maxWidth: 170, kind: "short", align: "right", render: (item) => formatNumber(item.compras_sugeridas) },
+    { key: "transfers", header: "Traslados", width: 120, minWidth: 90, maxWidth: 180, kind: "short", align: "right", render: (item) => formatNumber(item.traslados_sugeridos) },
+    { key: "validations", header: "Validaciones", width: 135, minWidth: 100, maxWidth: 220, kind: "short", align: "right", render: (item) => formatNumber(item.validaciones_datos) },
+    { key: "no-action", header: "Sin acción", width: 120, minWidth: 90, maxWidth: 180, kind: "short", align: "right", render: (item) => formatNumber(item.articulos_sin_accion) },
+  ];
+
+  return <ResizableTable rows={items} columns={columns} rowKey={(item) => item.warehouse_code || "sin-almacen"} storageKey="logistica-table-advanced-warehouses-columns" emptyMessage="Sin resumen por almacén." />;
 }
 
 export function App() {

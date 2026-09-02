@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { EmptyState } from "./EmptyState";
+import { ResizableTable, type ResizableTableColumn } from "../operational/components";
 
 export interface Column<T> {
   key: string;
@@ -15,7 +15,13 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   rowKey: (row: T) => string;
   onRowClick?: (row: T) => void;
+  storageKey?: string;
   pageSize?: number;
+}
+
+function parseWidth(width: string | undefined) {
+  const parsed = width ? Number.parseInt(width, 10) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : 180;
 }
 
 export function DataTable<T>({
@@ -23,6 +29,7 @@ export function DataTable<T>({
   columns,
   rowKey,
   onRowClick,
+  storageKey,
   pageSize = 15,
 }: DataTableProps<T>) {
   const [page, setPage] = useState(0);
@@ -33,49 +40,29 @@ export function DataTable<T>({
     [rows, safePage, pageSize],
   );
 
-  if (!rows.length) return <EmptyState />;
+  const resizableColumns: ResizableTableColumn<T>[] = columns.map((column) => {
+    const width = parseWidth(column.width);
+    const kind = column.align ? "short" : "medium";
+    return {
+      ...column,
+      width,
+      minWidth: Math.max(96, Math.min(width, 140)),
+      kind,
+    };
+  });
+  const tableStorageKey = storageKey || `logistica-table-legacy-${columns.map((column) => column.key).join("-")}`;
 
   return (
-    <div className="table-shell">
-      <div className="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              {columns.map((column) => (
-                <th
-                  key={column.key}
-                  style={{ width: column.width, textAlign: column.align || "left" }}
-                >
-                  {column.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {pageRows.map((row) => (
-              <tr
-                key={rowKey(row)}
-                className={onRowClick ? "clickable-row" : undefined}
-                onClick={() => onRowClick?.(row)}
-              >
-                {columns.map((column) => (
-                  <td key={column.key} style={{ textAlign: column.align || "left" }}>
-                    {column.render(row)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <footer className="table-footer">
+    <>
+      <ResizableTable rows={pageRows} columns={resizableColumns} rowKey={(row) => rowKey(row)} storageKey={tableStorageKey} onRowClick={onRowClick} />
+      <footer className="pagination-bar table-pagination">
         <span>
           {rows.length.toLocaleString("es-PE")} registros · Página {safePage + 1} de{" "}
           {pageCount}
         </span>
         <div>
           <button
-            className="icon-button"
+            className="secondary-button compact-button"
             disabled={safePage === 0}
             onClick={() => setPage(Math.max(0, safePage - 1))}
             aria-label="Página anterior"
@@ -83,7 +70,7 @@ export function DataTable<T>({
             <ChevronLeft size={17} />
           </button>
           <button
-            className="icon-button"
+            className="secondary-button compact-button"
             disabled={safePage >= pageCount - 1}
             onClick={() => setPage(Math.min(pageCount - 1, safePage + 1))}
             aria-label="Página siguiente"
@@ -92,6 +79,6 @@ export function DataTable<T>({
           </button>
         </div>
       </footer>
-    </div>
+    </>
   );
 }

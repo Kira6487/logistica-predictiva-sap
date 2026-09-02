@@ -1,0 +1,29 @@
+/* ================================================================
+   DATA REFRESH BAR
+   ================================================================ */
+.data-refresh-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
+}
+
+.data-refresh-bar div {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.data-refresh-bar strong {
+  font-size: 13.5px;
+}
+
+.data-refresh-bar span,
+.data-refresh-bar small {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}

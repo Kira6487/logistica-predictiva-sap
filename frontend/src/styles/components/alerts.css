@@ -1,0 +1,34 @@
+/* ================================================================
+   PANELS & CARDS — Base
+   ================================================================ */
+.state-panel,
+.plain-panel,
+.distribution,
+.detail-panel,
+.search-panel,
+.item-heading,
+.executive-header,
+.executive-panel,
+.executive-action-card,
+.report-shortcut,
+.diagnosis-panel,
+.supply-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.state-panel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xl);
+  color: var(--color-text-secondary);
+}
+
+.state-error {
+  color: var(--color-danger);
+  background: #fffafa;
+  border-color: #f0b8b8;
+}

@@ -1,5 +1,5 @@
 import { App as OperationalPortal } from "./operational/App";
-import "./operational/styles.css";
+import "./styles/main.css";
 
 export default function App() {
   return <OperationalPortal />;

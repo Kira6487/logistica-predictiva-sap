@@ -1,0 +1,41 @@
+/* ================================================================
+   PAGE STRUCTURE
+   ================================================================ */
+.page-stack {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+}
+
+.section-title {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+.section-title h2,
+.section-title p,
+.distribution h3,
+.detail-panel h3,
+.plain-panel h3 {
+  margin: 0;
+}
+
+.section-title h2 {
+  font-size: clamp(1.4rem, 2vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.section-title p {
+  color: var(--color-text-muted);
+  font-size: 13.5px;
+  max-width: 70ch;
+}
