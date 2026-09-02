@@ -20,6 +20,8 @@ import {
   RecommendationTable,
   RecommendationTypeBadge,
   RiskBadge,
+  ResizableTable,
+  type ResizableTableColumn,
   SectionHeader,
   StatusBadge,
   WarningBox,
@@ -543,47 +545,19 @@ function SupplyPlanFilters({
 }
 
 function SupplyPlanTable({ items, onSupport, onOpenItem }: { items: RecommendationRecord[]; onSupport: (item: RecommendationRecord) => void; onOpenItem: (itemCode: string) => void }) {
-  if (!items.length) return <EmptyState message="No hay artículos para los filtros actuales del plan." />;
-  return (
-    <div className="table-wrap">
-      <table className="data-table supply-table">
-        <thead>
-          <tr>
-            <th>Artículo</th>
-            <th>Almacén</th>
-            <th>Acción recomendada</th>
-            <th>Cantidad sugerida</th>
-            <th>Prioridad</th>
-            <th>Confianza</th>
-            <th>Motivo</th>
-            <th>Siguiente acción</th>
-            <th>Detalle</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr key={`${item.item_code}-${item.warehouse_code}-${item.recommendation_type}`}>
-              <td><strong>{item.item_name || "Sin nombre"}</strong><small>{item.item_code || "-"}</small></td>
-              <td>{item.warehouse_code || "-"}</td>
-              <td><span className={`supply-action-pill ${supplyActionClass(item)}`}>{supplyActionLabel(item)}</span></td>
-              <td>{item.suggested_quantity > 0 ? `${formatNumber(item.suggested_quantity, 2)} ref.` : "-"}</td>
-              <td><PriorityBadge value={item.priority_level} /></td>
-              <td><ConfidenceBadge value={item.recommendation_confidence} /></td>
-              <td>{item.business_reason || item.main_message}</td>
-              <td>{safeNextAction(item)}</td>
-              <td>
-                <div className="row-actions">
-                  <button className="secondary-button compact-button" type="button" onClick={() => onSupport(item)}>Ver sustento</button>
-                  <button className="secondary-button compact-button" type="button" onClick={() => item.item_code && onOpenItem(item.item_code)}>Ver diagnóstico</button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="table-note">La tabla orienta decisiones. No crea documentos SAP ni automatiza compras.</p>
-    </div>
-  );
+  const columns: ResizableTableColumn<RecommendationRecord>[] = [
+    { key: "item", header: "Artículo", width: 220, minWidth: 150, maxWidth: 420, kind: "medium", render: (item) => <><strong>{item.item_name || "Sin nombre"}</strong><small>{item.item_code || "-"}</small></> },
+    { key: "warehouse", header: "Almacén", width: 110, minWidth: 84, maxWidth: 180, kind: "short", render: (item) => item.warehouse_code || "-" },
+    { key: "action", header: "Acción recomendada", width: 190, minWidth: 150, maxWidth: 360, kind: "medium", render: (item) => <span className={`supply-action-pill ${supplyActionClass(item)}`}>{supplyActionLabel(item)}</span> },
+    { key: "quantity", header: "Cantidad sugerida", width: 140, minWidth: 110, maxWidth: 220, kind: "short", align: "right", render: (item) => item.suggested_quantity > 0 ? `${formatNumber(item.suggested_quantity, 2)} ref.` : "-" },
+    { key: "priority", header: "Prioridad", width: 120, minWidth: 100, maxWidth: 190, kind: "short", render: (item) => <PriorityBadge value={item.priority_level} /> },
+    { key: "confidence", header: "Confianza", width: 125, minWidth: 105, maxWidth: 200, kind: "short", render: (item) => <ConfidenceBadge value={item.recommendation_confidence} /> },
+    { key: "reason", header: "Motivo", width: 360, minWidth: 220, maxWidth: 700, kind: "long", render: (item) => item.business_reason || item.main_message },
+    { key: "next-action", header: "Siguiente acción", width: 190, minWidth: 150, maxWidth: 360, kind: "medium", render: (item) => safeNextAction(item) },
+    { key: "detail", header: "Detalle", width: 240, minWidth: 190, maxWidth: 380, kind: "medium", render: (item) => <div className="row-actions"><button className="secondary-button compact-button" type="button" onClick={() => onSupport(item)}>Ver sustento</button><button className="secondary-button compact-button" type="button" onClick={() => item.item_code && onOpenItem(item.item_code)}>Ver diagnóstico</button></div> },
+  ];
+
+  return <ResizableTable rows={items} columns={columns} rowKey={(item) => `${item.item_code}-${item.warehouse_code}-${item.recommendation_type}`} storageKey="logistica-table-recommendations-columns" note="La tabla orienta decisiones. No crea documentos SAP ni automatiza compras." emptyMessage="No hay artículos para los filtros actuales del plan." />;
 }
 
 function safeNextAction(item: RecommendationRecord) {
@@ -750,45 +724,21 @@ function PurchaseCandidatesPage({ resource, onOpenItem }: { resource: CachedReso
 }
 
 function PurchaseTable({ items, onOpenItem }: { items: RecommendationRecord[]; onOpenItem: (itemCode: string) => void }) {
-  if (!items.length) return <EmptyState message="No hay candidatos de compra para los filtros actuales." />;
-  return (
-    <div className="table-wrap">
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Articulo</th>
-            <th>Almacen</th>
-            <th>Cantidad referencial</th>
-            <th>Horizonte</th>
-            <th>Prioridad</th>
-            <th>Confianza</th>
-            <th>Riesgo</th>
-            <th>Proveedor</th>
-            <th>Lead time</th>
-            <th>Ultima compra</th>
-            <th>Motivo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr key={`${item.item_code}-${item.warehouse_code}`}>
-              <td><button className="link-button" type="button" onClick={() => item.item_code && onOpenItem(item.item_code)}>{item.item_code}</button><small>{item.item_name || "Sin nombre"}</small></td>
-              <td>{item.warehouse_code}</td>
-              <td>{formatNumber(item.suggested_quantity, 2)} ref.</td>
-              <td>{item.suggested_horizon_days ? `${item.suggested_horizon_days} dias` : "-"}</td>
-              <td><PriorityBadge value={item.priority_level} /></td>
-              <td><ConfidenceBadge value={item.recommendation_confidence} /></td>
-              <td><RiskBadge value={item.nivel_riesgo} /></td>
-              <td>{item.preferred_vendor_name || item.preferred_vendor_code || "-"}</td>
-              <td>{item.estimated_lead_time_days ? `${formatNumber(item.estimated_lead_time_days)} dias` : "-"}</td>
-              <td>{item.last_purchase_date || "-"} {item.last_purchase_price ? ` / ${formatNumber(item.last_purchase_price, 2)}` : ""}</td>
-              <td>{item.business_reason}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  const columns: ResizableTableColumn<RecommendationRecord>[] = [
+    { key: "item", header: "Artículo", width: 220, minWidth: 150, maxWidth: 420, kind: "medium", render: (item) => <><button className="link-button" type="button" onClick={() => item.item_code && onOpenItem(item.item_code)}>{item.item_code || "-"}</button><small>{item.item_name || "Sin nombre"}</small></> },
+    { key: "warehouse", header: "Almacén", width: 110, minWidth: 84, maxWidth: 180, kind: "short", render: (item) => item.warehouse_code || "-" },
+    { key: "quantity", header: "Cantidad referencial", width: 155, minWidth: 120, maxWidth: 240, kind: "short", align: "right", render: (item) => `${formatNumber(item.suggested_quantity, 2)} ref.` },
+    { key: "horizon", header: "Horizonte", width: 110, minWidth: 90, maxWidth: 180, kind: "short", align: "right", render: (item) => item.suggested_horizon_days ? `${item.suggested_horizon_days} días` : "-" },
+    { key: "priority", header: "Prioridad", width: 120, minWidth: 100, maxWidth: 190, kind: "short", render: (item) => <PriorityBadge value={item.priority_level} /> },
+    { key: "confidence", header: "Confianza", width: 125, minWidth: 105, maxWidth: 200, kind: "short", render: (item) => <ConfidenceBadge value={item.recommendation_confidence} /> },
+    { key: "risk", header: "Riesgo", width: 115, minWidth: 95, maxWidth: 190, kind: "short", render: (item) => <RiskBadge value={item.nivel_riesgo} /> },
+    { key: "vendor", header: "Proveedor", width: 220, minWidth: 150, maxWidth: 420, kind: "medium", render: (item) => item.preferred_vendor_name || item.preferred_vendor_code || "-" },
+    { key: "lead-time", header: "Lead time", width: 110, minWidth: 90, maxWidth: 180, kind: "short", align: "right", render: (item) => item.estimated_lead_time_days ? `${formatNumber(item.estimated_lead_time_days)} días` : "-" },
+    { key: "last-purchase", header: "Última compra", width: 180, minWidth: 140, maxWidth: 300, kind: "medium", render: (item) => <>{item.last_purchase_date || "-"}{item.last_purchase_price ? ` / ${formatNumber(item.last_purchase_price, 2)}` : ""}</> },
+    { key: "reason", header: "Motivo", width: 360, minWidth: 220, maxWidth: 700, kind: "long", render: (item) => item.business_reason || item.main_message },
+  ];
+
+  return <ResizableTable rows={items} columns={columns} rowKey={(item) => `${item.item_code}-${item.warehouse_code}`} storageKey="logistica-table-purchases-columns" emptyMessage="No hay candidatos de compra para los filtros actuales." />;
 }
 
 function TransferCandidatesPage({ resource, onOpenItem }: { resource: CachedResource<PaginatedResponse<RecommendationRecord>>; onOpenItem: (itemCode: string) => void }) {

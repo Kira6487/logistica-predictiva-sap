@@ -753,6 +753,10 @@ svg {
   border-spacing: 0;
 }
 
+.resizable-table {
+  table-layout: fixed;
+}
+
 .data-table th,
 .data-table td {
   padding: var(--space-md);
@@ -772,6 +776,95 @@ svg {
   text-transform: uppercase;
   letter-spacing: 0.03em;
   white-space: nowrap;
+}
+
+.resizable-table th {
+  position: sticky;
+  padding-right: calc(var(--space-md) + 8px);
+}
+
+.table-heading-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.column-resizer {
+  position: absolute;
+  top: 0;
+  right: -1px;
+  z-index: 2;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.column-resizer::after {
+  content: "";
+  position: absolute;
+  inset: 7px 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+  opacity: 0.75;
+  transition: background 120ms ease, opacity 120ms ease;
+}
+
+.column-resizer:hover::after,
+.column-resizer:focus-visible::after {
+  background: var(--color-primary);
+  opacity: 1;
+}
+
+.column-resizer:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.data-table.is-resizing,
+body.is-resizing-columns {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.data-table td {
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.data-table th.table-column--short,
+.data-table td.table-column--short {
+  white-space: nowrap;
+}
+
+.data-table td.table-column--long {
+  min-width: 220px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.data-table td.table-column--medium {
+  overflow-wrap: anywhere;
+}
+
+.table-utility {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 11.5px;
+}
+
+.table-utility-key {
+  color: var(--color-primary);
+  font-weight: 700;
 }
 
 .data-table tr:hover td {
@@ -1994,6 +2087,12 @@ svg {
   .data-table {
     min-width: 720px;
     font-size: 12px;
+  }
+
+  .table-utility {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-2xs);
   }
 
   .diagnosis-summary,

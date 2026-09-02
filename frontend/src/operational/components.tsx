@@ -15,7 +15,7 @@ import {
   ShieldAlert,
   ShoppingCart,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 import type { RecommendationFilters, RecommendationRecord } from "./types";
 
 export const RECOMMENDATION_TYPES = [
@@ -235,6 +235,195 @@ export function FilterBar({
           <label><input type="checkbox" checked={Boolean(filters.only_data_validation)} onChange={(event) => update("only_data_validation", event.target.checked)} /> Validar datos</label>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+type TableColumnKind = "short" | "medium" | "long";
+
+export interface ResizableTableColumn<T> {
+  key: string;
+  header: string;
+  width: number;
+  minWidth: number;
+  maxWidth?: number;
+  kind?: TableColumnKind;
+  align?: "left" | "center" | "right";
+  render: (row: T) => ReactNode;
+}
+
+interface ResizableTableProps<T> {
+  rows: T[];
+  columns: ResizableTableColumn<T>[];
+  rowKey: (row: T) => string;
+  storageKey: string;
+  rowClassName?: (row: T) => string | undefined;
+  note?: ReactNode;
+  emptyMessage?: string;
+}
+
+type ResizeState = { key: string; startX: number; startWidth: number } | null;
+
+function clampWidth(column: Pick<ResizableTableColumn<unknown>, "minWidth" | "maxWidth">, width: number) {
+  return Math.min(column.maxWidth ?? Number.POSITIVE_INFINITY, Math.max(column.minWidth, width));
+}
+
+function readStoredWidths<T>(storageKey: string, columns: ResizableTableColumn<T>[]) {
+  if (typeof window === "undefined") return {};
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(storageKey) || "{}");
+    if (!stored || typeof stored !== "object") return {};
+    return Object.fromEntries(
+      columns
+        .filter((column) => typeof stored[column.key] === "number" && Number.isFinite(stored[column.key]))
+        .map((column) => [column.key, clampWidth(column, stored[column.key])]),
+    ) as Record<string, number>;
+  } catch {
+    return {};
+  }
+}
+
+export function ResizableTable<T>({
+  rows,
+  columns,
+  rowKey,
+  storageKey,
+  rowClassName,
+  note,
+  emptyMessage,
+}: ResizableTableProps<T>) {
+  const defaultWidths = useMemo(
+    () => Object.fromEntries(columns.map((column) => [column.key, column.width])) as Record<string, number>,
+    [columns.map((column) => `${column.key}:${column.width}`).join("|")],
+  );
+  const columnSignature = columns.map((column) => `${column.key}:${column.width}:${column.minWidth}:${column.maxWidth ?? ""}`).join("|");
+  const columnMap = useMemo(() => new Map(columns.map((column) => [column.key, column])), [columnSignature]);
+  const [widths, setWidths] = useState<Record<string, number>>(() => ({
+    ...defaultWidths,
+    ...readStoredWidths(storageKey, columns),
+  }));
+  const [resizeState, setResizeState] = useState<ResizeState>(null);
+  const resizeStateRef = useRef<ResizeState>(null);
+
+  useEffect(() => {
+    setWidths((current) => ({
+      ...defaultWidths,
+      ...Object.fromEntries(
+        columns
+          .filter((column) => current[column.key] !== undefined)
+          .map((column) => [column.key, clampWidth(column, current[column.key])]),
+      ),
+    }));
+  }, [columnMap, columnSignature, defaultWidths]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(widths));
+    } catch {
+      // Storage can be unavailable in private browsing or locked-down environments.
+    }
+  }, [storageKey, widths]);
+
+  useEffect(() => {
+    resizeStateRef.current = resizeState;
+    if (!resizeState) return;
+
+    const handlePointerMove = (event: globalThis.PointerEvent) => {
+      const active = resizeStateRef.current;
+      if (!active) return;
+      const column = columnMap.get(active.key);
+      if (!column) return;
+      const nextWidth = clampWidth(column, active.startWidth + event.clientX - active.startX);
+      setWidths((current) => ({ ...current, [active.key]: nextWidth }));
+    };
+    const stopResizing = () => setResizeState(null);
+
+    document.body.classList.add("is-resizing-columns");
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopResizing);
+    window.addEventListener("pointercancel", stopResizing);
+    return () => {
+      document.body.classList.remove("is-resizing-columns");
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopResizing);
+      window.removeEventListener("pointercancel", stopResizing);
+    };
+  }, [columnMap, resizeState]);
+
+  const beginResize = (event: PointerEvent<HTMLSpanElement>, column: ResizableTableColumn<T>) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setResizeState({ key: column.key, startX: event.clientX, startWidth: widths[column.key] ?? column.width });
+  };
+
+  const adjustWithKeyboard = (event: KeyboardEvent<HTMLSpanElement>, column: ResizableTableColumn<T>) => {
+    const currentWidth = widths[column.key] ?? column.width;
+    const step = event.shiftKey ? 40 : 16;
+    let nextWidth: number | null = null;
+    if (event.key === "ArrowLeft") nextWidth = currentWidth - step;
+    if (event.key === "ArrowRight") nextWidth = currentWidth + step;
+    if (event.key === "Home") nextWidth = column.minWidth;
+    if (event.key === "End" && column.maxWidth) nextWidth = column.maxWidth;
+    if (nextWidth === null) return;
+    event.preventDefault();
+    setWidths((current) => ({ ...current, [column.key]: clampWidth(column, nextWidth!) }));
+  };
+
+  if (!rows.length) return <EmptyState message={emptyMessage} />;
+
+  return (
+    <div className="table-wrap">
+      <div className="table-utility" aria-live="polite">
+        <span>Arrastra los divisores de los encabezados para ajustar el ancho.</span>
+        <span className="table-utility-key">Preferencias guardadas en este navegador</span>
+      </div>
+      <table className={`data-table resizable-table${resizeState ? " is-resizing" : ""}`}>
+        <colgroup>
+          {columns.map((column) => {
+            const width = widths[column.key] ?? column.width;
+            return <col key={column.key} style={{ width: `${width}px`, minWidth: `${column.minWidth}px` }} />;
+          })}
+        </colgroup>
+        <thead>
+          <tr>
+            {columns.map((column) => {
+              const width = widths[column.key] ?? column.width;
+              const headerStyle: CSSProperties = { textAlign: column.align || "left" };
+              return (
+                <th key={column.key} className={`table-column--${column.kind || "medium"}`} style={headerStyle}>
+                  <span className="table-heading-label">{column.header}</span>
+                  <span
+                    className="column-resizer"
+                    role="separator"
+                    aria-orientation="vertical"
+                    aria-label={`Ajustar ancho de ${column.header}`}
+                    aria-valuemin={column.minWidth}
+                    aria-valuemax={column.maxWidth}
+                    aria-valuenow={Math.round(width)}
+                    tabIndex={0}
+                    onPointerDown={(event) => beginResize(event, column)}
+                    onKeyDown={(event) => adjustWithKeyboard(event, column)}
+                  />
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={rowKey(row)} className={rowClassName?.(row)}>
+              {columns.map((column) => (
+                <td key={column.key} className={`table-column--${column.kind || "medium"}`} style={{ textAlign: column.align || "left" }}>
+                  {column.render(row)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {note ? <p className="table-note">{note}</p> : null}
     </div>
   );
 }
